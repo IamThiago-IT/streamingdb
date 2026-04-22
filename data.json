@@ -1,0 +1,68 @@
+[
+  {
+    "ranking": 1,
+    "plataforma": "Looke",
+    "plano": "Plano Mensal",
+    "preco_mensal": 16.90
+  },
+  {
+    "ranking": 2,
+    "plataforma": "Prime Video",
+    "plano": "Plano Mensal",
+    "preco_mensal": 19.90
+  },
+  {
+    "ranking": 3,
+    "plataforma": "Crunchyroll",
+    "plano": "Plano FAN",
+    "preco_mensal": 19.90
+  },
+  {
+    "ranking": 4,
+    "plataforma": "Netflix",
+    "plano": "Padrão com Anúncios",
+    "preco_mensal": 20.90
+  },
+  {
+    "ranking": 5,
+    "plataforma": "Globoplay",
+    "plano": "Padrão com Anúncios",
+    "preco_mensal": 22.90
+  },
+  {
+    "ranking": 6,
+    "plataforma": "YouTube Premium",
+    "plano": "Plano Individual",
+    "preco_mensal": 26.90
+  },
+  {
+    "ranking": 7,
+    "plataforma": "Disney+",
+    "plano": "Padrão com Anúncios",
+    "preco_mensal": 27.99
+  },
+  {
+    "ranking": 8,
+    "plataforma": "HBO Max",
+    "plano": "Básico com Anúncios",
+    "preco_mensal": 29.90
+  },
+  {
+    "ranking": 9,
+    "plataforma": "Apple TV+",
+    "plano": "Plano Mensal",
+    "preco_mensal": 29.90
+  },
+  {
+    "ranking": 10,
+    "plataforma": "Paramount+",
+    "plano": "Plano Padrão",
+    "preco_mensal": 34.90
+  },
+  {
+    "ranking": 11,
+    "plataforma": "MUBI",
+    "plano": "Plano Mensal",
+    "preco_mensal": 34.90
+  }
+]
