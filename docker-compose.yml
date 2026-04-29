@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  # Banco de dados PostgreSQL
+  db:
+    image: postgres:16-alpine
+    container_name: streamingdb-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-streamingdb_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-streamingdb_password}
+      POSTGRES_DB: ${POSTGRES_DB:-streamingdb}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-streamingdb_user}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - streamingdb-network
+
+  # Aplicação Next.js
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: streamingdb-app
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      DATABASE_URL: ${DATABASE_URL:-postgresql://${POSTGRES_USER:-streamingdb_user}:${POSTGRES_PASSWORD:-streamingdb_password}@db:5432/${POSTGRES_DB:-streamingdb}}
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3000}
+    ports:
+      - "3000:3000"
+    networks:
+      - streamingdb-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  streamingdb-network:
+    driver: bridge
