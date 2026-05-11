@@ -16,9 +16,69 @@ Uma aplicação web moderna para gerenciar e visualizar dados em tempo real, con
 
 - Node.js 18+ 
 - pnpm (recomendado) ou npm
-- PostgreSQL 12+
+- PostgreSQL 12+ (ou Docker para usar containerização)
 
-## 🔧 Instalação
+## 🐳 Docker (Recomendado)
+
+### Com Docker Compose
+
+A forma mais fácil de executar o projeto é com Docker Compose, que gerencia tanto o banco de dados quanto a aplicação:
+
+1. Certifique-se de ter [Docker](https://www.docker.com/get-started) e [Docker Compose](https://docs.docker.com/compose/install/) instalados.
+
+2. Clone o repositório:
+```bash
+git clone <seu-repositorio>
+cd streamingdb
+```
+
+3. Copie o arquivo de ambiente:
+```bash
+cp .env.example .env.local
+```
+
+4. Inicie os serviços com Docker Compose:
+```bash
+docker-compose up -d
+```
+
+5. A aplicação estará disponível em [http://localhost:3000](http://localhost:3000)
+
+### Comandos Docker Úteis
+
+```bash
+# Ver logs da aplicação
+docker-compose logs -f app
+
+# Acessar shell da aplicação
+docker-compose exec app sh
+
+# Acessar console do Prisma Studio
+docker-compose exec app pnpm prisma studio
+
+# Parar os serviços
+docker-compose down
+
+# Parar e remover volumes (limpar tudo)
+docker-compose down -v
+
+# Rebuild das imagens
+docker-compose build --no-cache
+```
+
+### Variáveis de Ambiente (Docker)
+
+Edite o arquivo `.env.local` para customizar:
+
+```bash
+POSTGRES_USER=streamingdb_user
+POSTGRES_PASSWORD=streamingdb_password
+POSTGRES_DB=streamingdb
+NODE_ENV=production
+NEXT_PUBLIC_API_URL=http://localhost:3000
+```
+
+## 🔧 Instalação (Sem Docker)
 
 1. Clone o repositório:
 ```bash
