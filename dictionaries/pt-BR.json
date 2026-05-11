@@ -1,0 +1,7 @@
+{
+  "home": {
+    "greeting": "Oi! 👋",
+    "welcome": "Bem-vindo ao <strong>StreamingDB</strong>!",
+    "description": "O objetivo deste projeto é criar um site/app semelhante ao SteamDB, com informações sobre jogos, streaming e dados relacionados."
+  }
+}
