@@ -1,15 +1,96 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client"
   output   = "../app/generated/prisma"
 }
 
+
+model Platform {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  slug      String   @unique
+  logo      String?
+  website   String?
+  color     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  plans        Plan[]
+  availability ContentAvailability[]
+  changeLog    ChangeLog[]
+}
+
+model Plan {
+  id           String   @id @default(cuid())
+  platformId   String
+  name         String
+  price        Float
+  billingCycle String  @default("mensal")
+  quality      String?
+  ads          Boolean @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  platform     Platform       @relation(fields: [platformId], references: [id])
+  priceHistory PriceHistory[]
+}
+
+model Content {
+  id            String   @id @default(cuid())
+  title         String
+  originalTitle String?
+  slug          String   @unique
+  type          String
+  year          Int?
+  genre         String?
+  poster        String?
+  synopsis      String?
+  rating        Float?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  availability ContentAvailability[]
+  changeLog    ChangeLog[]
+}
+
+model ContentAvailability {
+  id         String   @id @default(cuid())
+  contentId  String
+  platformId String
+  available  Boolean  @default(true)
+  addedAt    DateTime @default(now())
+  removedAt  DateTime?
+  updatedAt  DateTime @updatedAt
+
+  content  Content  @relation(fields: [contentId], references: [id])
+  platform Platform @relation(fields: [platformId], references: [id])
+
+  @@unique([contentId, platformId])
+}
+
+model PriceHistory {
+  id         String   @id @default(cuid())
+  planId     String
+  price      Float
+  recordedAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+
+  plan Plan @relation(fields: [planId], references: [id])
+}
+
+model ChangeLog {
+  id          String   @id @default(cuid())
+  type        String
+  description String
+  platformId  String?
+  contentId   String?
+  oldValue    String?
+  newValue    String?
+  createdAt   DateTime @default(now())
+
+  platform Platform? @relation(fields: [platformId], references: [id])
+  content  Content?  @relation(fields: [contentId], references: [id])
+}
+
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }

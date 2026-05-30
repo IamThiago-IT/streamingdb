@@ -3,6 +3,8 @@ import { NextResponse } from "next/server";
 const locales = ["en", "pt-BR"];
 const defaultLocale = "pt-BR";
 
+export const runtime = "edge";
+
 function getLocale(request: Request): string {
   const acceptLang = request.headers.get("Accept-Language");
   if (!acceptLang) return defaultLocale;
