@@ -1,8 +1,9 @@
+import "dotenv/config";
 import { PrismaClient } from "@/app/generated/prisma/client";
-import { PrismaPg } from "@prisma/adapter-pg";
+import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 
-const adapter = new PrismaPg({
-  connectionString: process.env.DATABASE_URL!,
+const adapter = new PrismaBetterSqlite3({
+  url: process.env.DATABASE_URL ?? "file:./dev.db",
 });
 
 const prisma = new PrismaClient({ adapter });
@@ -116,6 +117,8 @@ async function main() {
     }
   }
 
+  const allPlatforms = await prisma.platform.findMany();
+
   for (const c of sampleContent) {
     const content = await prisma.content.create({
       data: {
@@ -129,7 +132,6 @@ async function main() {
       },
     });
 
-    const allPlatforms = await prisma.platform.findMany({ take: 8 });
     const shuffled = allPlatforms.sort(() => Math.random() - 0.5).slice(0, 3);
     for (const platform of shuffled) {
       await prisma.contentAvailability.create({
@@ -138,7 +140,6 @@ async function main() {
     }
   }
 
-  const allPlatforms = await prisma.platform.findMany();
   for (const platform of allPlatforms) {
     await prisma.changeLog.create({
       data: {

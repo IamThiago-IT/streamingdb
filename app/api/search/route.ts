@@ -11,14 +11,14 @@ export async function GET(request: NextRequest) {
 
   const [platforms, contents] = await Promise.all([
     prisma.platform.findMany({
-      where: { name: { contains: q, mode: "insensitive" } },
+      where: { name: { contains: q } },
       take: 5,
     }),
     prisma.content.findMany({
       where: {
         OR: [
-          { title: { contains: q, mode: "insensitive" } },
-          { originalTitle: { contains: q, mode: "insensitive" } },
+          { title: { contains: q } },
+          { originalTitle: { contains: q } },
         ],
       },
       include: {

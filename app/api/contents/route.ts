@@ -14,13 +14,13 @@ export async function GET(request: NextRequest) {
 
   if (query) {
     where.OR = [
-      { title: { contains: query, mode: "insensitive" } },
-      { originalTitle: { contains: query, mode: "insensitive" } },
+      { title: { contains: query } },
+      { originalTitle: { contains: query } },
     ];
   }
 
   if (type) where.type = type;
-  if (genre) where.genre = { contains: genre, mode: "insensitive" };
+  if (genre) where.genre = { contains: genre };
   if (platform) {
     where.availability = {
       some: { platform: { slug: platform } },

@@ -92,5 +92,5 @@ model ChangeLog {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
 }
