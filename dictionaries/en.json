@@ -1,7 +1,63 @@
 {
   "home": {
-    "greeting": "Hi! 👋",
-    "welcome": "Welcome to <strong>StreamingDB</strong>!",
-    "description": "The goal of this project is to create a site/app similar to SteamDB, with information about games, streaming, and related data."
+    "title": "StreamingDB",
+    "description": "Track prices, catalogs and changes across streaming platforms",
+    "stats": {
+      "platforms": "platforms",
+      "contents": "titles",
+      "changes": "changes"
+    },
+    "cheapest": "Cheapest plan"
+  },
+  "nav": {
+    "home": "Home",
+    "platforms": "Platforms",
+    "contents": "Catalog",
+    "changes": "Changes"
+  },
+  "platforms": {
+    "title": "Streaming Platforms",
+    "plans": "Plans",
+    "price": "Price",
+    "priceRange": "from",
+    "contentCount": "titles",
+    "noPlatforms": "No platforms found"
+  },
+  "platform": {
+    "plans": "Plans & Pricing",
+    "catalog": "Content Catalog",
+    "changes": "Recent Changes",
+    "contentCount": "titles available",
+    "priceHistory": "Price History"
+  },
+  "contents": {
+    "title": "Content Catalog",
+    "searchPlaceholder": "Search movies and series...",
+    "filterType": "Type",
+    "all": "All",
+    "movies": "Movies",
+    "series": "Series",
+    "noResults": "No content found",
+    "availableOn": "Available on"
+  },
+  "content": {
+    "type_movie": "Movie",
+    "type_series": "Series",
+    "year": "Year",
+    "genre": "Genre",
+    "rating": "Rating",
+    "availability": "Availability",
+    "changes": "Changes"
+  },
+  "changes": {
+    "title": "Recent Changes",
+    "noChanges": "No changes recorded",
+    "types": {
+      "PRICE_CHANGE": "Price change",
+      "CONTENT_ADDED": "Content added",
+      "CONTENT_REMOVED": "Content removed",
+      "NEW_PLATFORM": "New platform",
+      "PLAN_CHANGE": "Plan change"
+    }
   }
 }

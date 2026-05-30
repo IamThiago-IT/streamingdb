@@ -1,7 +1,63 @@
 {
   "home": {
-    "greeting": "Oi! 👋",
-    "welcome": "Bem-vindo ao <strong>StreamingDB</strong>!",
-    "description": "O objetivo deste projeto é criar um site/app semelhante ao SteamDB, com informações sobre jogos, streaming e dados relacionados."
+    "title": "StreamingDB",
+    "description": "Acompanhe preços, catálogos e mudanças das plataformas de streaming",
+    "stats": {
+      "platforms": "plataformas",
+      "contents": "conteúdos",
+      "changes": "mudanças"
+    },
+    "cheapest": "Plano mais barato"
+  },
+  "nav": {
+    "home": "Início",
+    "platforms": "Plataformas",
+    "contents": "Catálogo",
+    "changes": "Mudanças"
+  },
+  "platforms": {
+    "title": "Plataformas de Streaming",
+    "plans": "Planos",
+    "price": "Preço",
+    "priceRange": "a partir de",
+    "contentCount": "conteúdos",
+    "noPlatforms": "Nenhuma plataforma encontrada"
+  },
+  "platform": {
+    "plans": "Planos e Preços",
+    "catalog": "Catálogo de Conteúdos",
+    "changes": "Mudanças Recentes",
+    "contentCount": "conteúdos disponíveis",
+    "priceHistory": "Histórico de Preços"
+  },
+  "contents": {
+    "title": "Catálogo de Conteúdos",
+    "searchPlaceholder": "Buscar filmes e séries...",
+    "filterType": "Tipo",
+    "all": "Todos",
+    "movies": "Filmes",
+    "series": "Séries",
+    "noResults": "Nenhum conteúdo encontrado",
+    "availableOn": "Disponível em"
+  },
+  "content": {
+    "type_movie": "Filme",
+    "type_series": "Série",
+    "year": "Ano",
+    "genre": "Gênero",
+    "rating": "Avaliação",
+    "availability": "Disponibilidade",
+    "changes": "Mudanças"
+  },
+  "changes": {
+    "title": "Mudanças Recentes",
+    "noChanges": "Nenhuma mudança registrada",
+    "types": {
+      "PRICE_CHANGE": "Mudança de preço",
+      "CONTENT_ADDED": "Conteúdo adicionado",
+      "CONTENT_REMOVED": "Conteúdo removido",
+      "NEW_PLATFORM": "Nova plataforma",
+      "PLAN_CHANGE": "Mudança de plano"
+    }
   }
 }
