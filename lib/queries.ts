@@ -35,6 +35,22 @@ export async function getPlatformBySlug(slug: string) {
   });
 }
 
+export type PlatformWithPriceHistory = Awaited<ReturnType<typeof getPlatformWithAllPriceHistory>>;
+
+export async function getPlatformWithAllPriceHistory(slug: string) {
+  return prisma.platform.findUnique({
+    where: { slug },
+    include: {
+      plans: {
+        include: {
+          priceHistory: { orderBy: { recordedAt: "asc" } },
+        },
+        orderBy: { price: "asc" },
+      },
+    },
+  });
+}
+
 export async function getContents(params: {
   query?: string;
   type?: string;
@@ -95,8 +111,12 @@ export async function getContentBySlug(slug: string) {
   });
 }
 
-export async function getRecentChanges(limit = 30) {
+export async function getRecentChanges(type?: string, limit = 50) {
+  const where: Record<string, unknown> = {};
+  if (type) where.type = type;
+
   return prisma.changeLog.findMany({
+    where,
     include: { platform: true, content: true },
     orderBy: { createdAt: "desc" },
     take: limit,
@@ -112,4 +132,20 @@ export async function getDashboardStats() {
   ]);
 
   return { platformCount, contentCount, changeCount, cheapestPlan };
+}
+
+export async function getPriceComparison() {
+  const plans = await prisma.plan.findMany({
+    include: { platform: true },
+    orderBy: { price: "asc" },
+  });
+
+  const adsPlans = plans.filter((p) => p.ads);
+  const noAdsPlans = plans.filter((p) => !p.ads);
+
+  return {
+    cheapest: plans.slice(0, 5),
+    cheapestNoAds: noAdsPlans.slice(0, 5),
+    cheapestWithAds: adsPlans.slice(0, 5),
+  };
 }

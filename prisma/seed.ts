@@ -92,6 +92,17 @@ async function slugify(text: string): Promise<string> {
   return text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 }
 
+function monthsAgo(n: number): Date {
+  const d = new Date();
+  d.setMonth(d.getMonth() - n);
+  d.setDate(1);
+  return d;
+}
+
+function randomVariation(base: number, pct: number): number {
+  return Math.round(base * (1 + (Math.random() - 0.5) * pct) * 100) / 100;
+}
+
 async function main() {
   for (const p of platformsData) {
     const platform = await prisma.platform.create({ data: p });
@@ -110,9 +121,16 @@ async function main() {
           },
         });
 
-        await prisma.priceHistory.create({
-          data: { planId: plan.id, price: planData.price },
-        });
+        for (let i = 3; i >= 0; i--) {
+          const oldPrice = i === 0 ? planData.price : randomVariation(planData.price, 0.15);
+          await prisma.priceHistory.create({
+            data: {
+              planId: plan.id,
+              price: oldPrice,
+              recordedAt: monthsAgo(i),
+            },
+          });
+        }
       }
     }
   }

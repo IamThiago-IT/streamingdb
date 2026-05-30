@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getDictionary, hasLocale } from "../../dictionaries";
-import { getPlatformBySlug } from "@/lib/queries";
+import { getPlatformBySlug, getPlatformWithAllPriceHistory } from "@/lib/queries";
+import PriceHistoryChart from "@/components/PriceHistoryChart";
+import PriceBadge from "@/components/PriceBadge";
+import Header from "@/components/Header";
 
 export default async function PlatformDetail({
   params,
@@ -11,23 +14,27 @@ export default async function PlatformDetail({
 
   const dict = await getDictionary(lang);
   const platform = await getPlatformBySlug(slug);
+  const platformWithHistory = await getPlatformWithAllPriceHistory(slug);
 
-  if (!platform) notFound();
+  if (!platform || !platformWithHistory) notFound();
+
+  const chartData = platformWithHistory.plans.flatMap((plan) =>
+    plan.priceHistory.map((h) => ({
+      recordedAt: h.recordedAt.toISOString(),
+      price: h.price,
+      planName: plan.name,
+    }))
+  );
+
+  const planColorMap: Record<string, string> = {};
+  const colors = ["#3b82f6", "#10b981", "#f59e0b", "#8b5cf6", "#ef4444"];
+  platform.plans.forEach((plan, i) => {
+    planColorMap[plan.name] = colors[i % colors.length];
+  });
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-black">
-      <header className="border-b border-zinc-200 dark:border-zinc-800">
-        <div className="mx-auto max-w-6xl px-4 py-4 flex items-center justify-between">
-          <Link href={`/${lang}`} className="text-xl font-bold tracking-tight text-black dark:text-white">
-            {dict.home.title}
-          </Link>
-          <nav className="flex gap-6 text-sm font-medium text-zinc-600 dark:text-zinc-400">
-            <Link href={`/${lang}/platforms`}>{dict.nav.platforms}</Link>
-            <Link href={`/${lang}/contents`}>{dict.nav.contents}</Link>
-            <Link href={`/${lang}/changes`}>{dict.nav.changes}</Link>
-          </nav>
-        </div>
-      </header>
+      <Header lang={lang} title={dict.home.title} />
 
       <main className="mx-auto max-w-4xl px-4 py-12">
         <div className="flex items-center gap-3 mb-8">
@@ -43,6 +50,7 @@ export default async function PlatformDetail({
           <div className="grid gap-3">
             {platform.plans.map((plan) => {
               const latestPrice = plan.priceHistory[0];
+              const previousPrice = plan.priceHistory[1];
               return (
                 <div
                   key={plan.id}
@@ -50,7 +58,12 @@ export default async function PlatformDetail({
                 >
                   <div className="flex items-center justify-between mb-2">
                     <div>
-                      <h3 className="font-medium text-black dark:text-white">{plan.name}</h3>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-medium text-black dark:text-white">{plan.name}</h3>
+                        {previousPrice && (
+                          <PriceBadge current={latestPrice!.price} previous={previousPrice.price} />
+                        )}
+                      </div>
                       <p className="text-xs text-zinc-500">
                         {plan.ads ? "Com anúncios" : "Sem anúncios"}
                         {plan.quality ? ` · ${plan.quality}` : ""}
@@ -59,30 +72,27 @@ export default async function PlatformDetail({
                     </div>
                     <p className="text-xl font-bold tabular-nums text-black dark:text-white">
                       R$ {latestPrice?.price.toFixed(2) ?? plan.price.toFixed(2)}
-                      <span className="text-xs font-normal text-zinc-500">/{plan.billingCycle === "anual" ? "ano" : "mês"}</span>
+                      <span className="text-xs font-normal text-zinc-500">
+                        /{plan.billingCycle === "anual" ? "ano" : "mês"}
+                      </span>
                     </p>
                   </div>
-
-                  {plan.priceHistory.length > 1 && (
-                    <details className="mt-3">
-                      <summary className="text-xs text-zinc-500 cursor-pointer hover:text-zinc-700 dark:hover:text-zinc-300">
-                        {dict.platform.priceHistory}
-                      </summary>
-                      <div className="mt-2 space-y-1">
-                        {plan.priceHistory.map((h) => (
-                          <div key={h.id} className="flex justify-between text-xs text-zinc-500">
-                            <span>{new Date(h.recordedAt).toLocaleDateString("pt-BR")}</span>
-                            <span className="font-medium">R$ {h.price.toFixed(2)}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </details>
-                  )}
                 </div>
               );
             })}
           </div>
         </section>
+
+        {chartData.length > 0 && (
+          <section className="mb-10">
+            <h2 className="text-lg font-semibold text-black dark:text-white mb-4">
+              {dict.platform.priceHistory}
+            </h2>
+            <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 p-5 bg-white dark:bg-zinc-900">
+              <PriceHistoryChart data={chartData} planColors={planColorMap} />
+            </div>
+          </section>
+        )}
 
         <section className="mb-10">
           <h2 className="text-lg font-semibold text-black dark:text-white mb-4">

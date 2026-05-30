@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getDictionary, hasLocale } from "../../dictionaries";
 import { getContentBySlug } from "@/lib/queries";
+import Header from "@/components/Header";
 
 export default async function ContentDetail({
   params,
@@ -16,18 +17,7 @@ export default async function ContentDetail({
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-black">
-      <header className="border-b border-zinc-200 dark:border-zinc-800">
-        <div className="mx-auto max-w-6xl px-4 py-4 flex items-center justify-between">
-          <Link href={`/${lang}`} className="text-xl font-bold tracking-tight text-black dark:text-white">
-            {dict.home.title}
-          </Link>
-          <nav className="flex gap-6 text-sm font-medium text-zinc-600 dark:text-zinc-400">
-            <Link href={`/${lang}/platforms`}>{dict.nav.platforms}</Link>
-            <Link href={`/${lang}/contents`}>{dict.nav.contents}</Link>
-            <Link href={`/${lang}/changes`}>{dict.nav.changes}</Link>
-          </nav>
-        </div>
-      </header>
+      <Header lang={lang} title={dict.home.title} />
 
       <main className="mx-auto max-w-4xl px-4 py-12">
         <div className="mb-8">
