@@ -12,7 +12,10 @@
     "db:push": "npx prisma db push",
     "db:seed": "npx tsx prisma/seed.ts",
     "db:studio": "npx prisma studio",
-    "db:reset": "npx prisma migrate reset --force"
+    "db:reset": "npx prisma migrate reset --force",
+    "scrape": "npx tsx scripts/scraper.ts",
+    "monitor": "npx tsx scripts/monitor.ts",
+    "seed:content": "npx tsx scripts/seed-content.ts"
   },
   "prisma": {
     "seed": "npx tsx prisma/seed.ts"
@@ -22,6 +25,7 @@
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
     "better-sqlite3": "^12.10.0",
+    "cheerio": "^1.2.0",
     "dotenv": "^17.4.2",
     "next": "16.2.2",
     "pg": "^8.21.0",
