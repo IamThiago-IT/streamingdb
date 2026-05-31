@@ -16,10 +16,11 @@ export default function Header({
         >
           {title}
         </Link>
-        <nav className="flex gap-6 text-sm font-medium text-zinc-600 dark:text-zinc-400">
-          <Link href={`/${lang}/platforms`}>Plataformas</Link>
-          <Link href={`/${lang}/contents`}>Catálogo</Link>
-          <Link href={`/${lang}/changes`}>Mudanças</Link>
+        <nav className="flex items-center gap-5 text-sm font-medium text-zinc-600 dark:text-zinc-400">
+          <Link href={`/${lang}/platforms`} className="hover:text-zinc-900 dark:hover:text-zinc-200">Plataformas</Link>
+          <Link href={`/${lang}/contents`} className="hover:text-zinc-900 dark:hover:text-zinc-200">Catálogo</Link>
+          <Link href={`/${lang}/compare`} className="hover:text-zinc-900 dark:hover:text-zinc-200">Comparar</Link>
+          <Link href={`/${lang}/changes`} className="hover:text-zinc-900 dark:hover:text-zinc-200">Mudanças</Link>
         </nav>
       </div>
     </header>
