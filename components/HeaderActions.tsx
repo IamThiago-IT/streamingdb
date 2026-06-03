@@ -2,18 +2,36 @@
 
 import Link from "next/link";
 import { useTheme } from "@/app/[lang]/ThemeProvider";
+import { authClient } from "@/lib/auth-client";
 
 export default function HeaderActions({ lang }: { lang: string }) {
   const { theme, toggle } = useTheme();
+  const { data: session } = authClient.useSession();
 
   return (
     <div className="flex items-center gap-2">
-      <Link
-        href={`/${lang}/login`}
-        className="rounded-lg bg-zinc-100 px-3 py-1.5 text-xs font-medium text-zinc-700 transition-colors hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
-      >
-        Entrar
-      </Link>
+      {session ? (
+        <Link
+          href={`/${lang}/profile`}
+          className="flex items-center gap-2 rounded-lg bg-zinc-100 px-3 py-1.5 text-xs font-medium text-zinc-700 transition-colors hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+        >
+          {session.user.image ? (
+            <img src={session.user.image} alt="" className="h-5 w-5 rounded-full" />
+          ) : (
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-[10px] text-white">
+              {session.user.email[0].toUpperCase()}
+            </span>
+          )}
+          {session.user.name ?? session.user.email}
+        </Link>
+      ) : (
+        <Link
+          href={`/${lang}/login`}
+          className="rounded-lg bg-zinc-100 px-3 py-1.5 text-xs font-medium text-zinc-700 transition-colors hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+        >
+          Entrar
+        </Link>
+      )}
       <button
         onClick={toggle}
         aria-label={theme === "light" ? "Modo escuro" : "Modo claro"}

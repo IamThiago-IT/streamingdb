@@ -7,8 +7,6 @@ const globalForPrisma = globalThis as unknown as {
 
 const adapter = new PrismaBetterSqlite3({
   url: "file:./dev.db",
-  // @ts-expect-error - Prisma 7 adapter expects this
-  fileName: "./dev.db",
 });
 
 export const prisma =
