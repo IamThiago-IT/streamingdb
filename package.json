@@ -2,6 +2,7 @@
   "name": "streamingdb",
   "version": "0.1.0",
   "private": true,
+  "author": "IamThiagoIT",
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "npx prisma generate && next build",
@@ -19,6 +20,16 @@
   },
   "prisma": {
     "seed": "npx tsx prisma/seed.ts"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@prisma/engines",
+      "better-sqlite3",
+      "esbuild",
+      "prisma",
+      "sharp",
+      "unrs-resolver"
+    ]
   },
   "dependencies": {
     "@prisma/adapter-better-sqlite3": "^7.8.0",
