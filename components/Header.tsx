@@ -1,4 +1,5 @@
 import Link from "next/link";
+import HeaderActions from "./HeaderActions";
 
 export default function Header({
   lang,
@@ -22,6 +23,7 @@ export default function Header({
           <Link href={`/${lang}/compare`} className="hover:text-zinc-900 dark:hover:text-zinc-200">Comparar</Link>
           <Link href={`/${lang}/changes`} className="hover:text-zinc-900 dark:hover:text-zinc-200">Mudanças</Link>
         </nav>
+        <HeaderActions lang={lang} />
       </div>
     </header>
   );
