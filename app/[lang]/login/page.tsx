@@ -1,21 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { useState } from "react";
 import { authClient } from "@/lib/auth-client";
 import Header from "@/components/Header";
-import { useDictionary } from "../dictionaries";
 
-export default function LoginPage({ params }: { params: Promise<{ lang: string }> }) {
+export default function LoginPage() {
   const router = useRouter();
+  const params = useParams();
+  const lang = params.lang as string;
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [lang, setLang] = useState("");
-  const dict = useDictionary(lang as string);
-
-  params.then((p) => setLang(p.lang));
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -37,7 +34,7 @@ export default function LoginPage({ params }: { params: Promise<{ lang: string }
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-black">
-      <Header lang={lang} title={dict?.home?.title ?? "StreamingDB"} />
+      <Header lang={lang} title="StreamingDB" />
 
       <main className="mx-auto max-w-sm px-4 py-24">
         <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-8">
@@ -70,9 +67,7 @@ export default function LoginPage({ params }: { params: Promise<{ lang: string }
                 className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-sm text-black dark:text-white placeholder-zinc-400"
               />
             </div>
-            {error && (
-              <p className="text-sm text-red-500">{error}</p>
-            )}
+            {error && <p className="text-sm text-red-500">{error}</p>}
             <button
               type="submit"
               className="w-full rounded-lg bg-blue-600 py-2 text-sm font-medium text-white hover:bg-blue-700"
