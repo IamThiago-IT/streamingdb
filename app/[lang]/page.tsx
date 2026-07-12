@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getDictionary, hasLocale } from "./dictionaries";
 import { getDashboardStats, getRecentChanges, getPlatforms, getPriceComparison } from "@/lib/queries";
 import Header from "@/components/Header";
+import PlatformLogo from "@/components/PlatformLogo";
 
 function ChangeIcon({ type }: { type: string }) {
   switch (type) {
@@ -79,10 +80,7 @@ export default async function Home({
                       className="flex items-center justify-between text-sm hover:bg-zinc-50 dark:hover:bg-zinc-800/50 -mx-2 px-2 py-1 rounded"
                     >
                       <div className="flex items-center gap-2">
-                        <div
-                          className="w-2 h-2 rounded-full flex-shrink-0"
-                          style={{ backgroundColor: plan.platform.color ?? "#666" }}
-                        />
+                        <PlatformLogo platform={plan.platform} size="sm" />
                         <span className="text-black dark:text-white">{plan.platform.name}</span>
                         <span className="text-zinc-400">· {plan.name}</span>
                       </div>
@@ -104,10 +102,7 @@ export default async function Home({
                       className="flex items-center justify-between text-sm hover:bg-zinc-50 dark:hover:bg-zinc-800/50 -mx-2 px-2 py-1 rounded"
                     >
                       <div className="flex items-center gap-2">
-                        <div
-                          className="w-2 h-2 rounded-full flex-shrink-0"
-                          style={{ backgroundColor: plan.platform.color ?? "#666" }}
-                        />
+                        <PlatformLogo platform={plan.platform} size="sm" />
                         <span className="text-black dark:text-white">{plan.platform.name}</span>
                         <span className="text-zinc-400">· {plan.name}</span>
                       </div>
@@ -140,10 +135,7 @@ export default async function Home({
                 className="rounded-lg border border-zinc-200 dark:border-zinc-800 p-4 bg-white dark:bg-zinc-900 hover:border-zinc-300 dark:hover:border-zinc-700 transition-colors"
               >
                 <div className="flex items-center gap-3">
-                  <div
-                    className="w-3 h-3 rounded-full flex-shrink-0"
-                    style={{ backgroundColor: p.color ?? "#666" }}
-                  />
+                  <PlatformLogo platform={p} size="md" />
                   <span className="font-medium text-sm text-black dark:text-white truncate">
                     {p.name}
                   </span>

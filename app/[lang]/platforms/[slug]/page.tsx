@@ -5,6 +5,7 @@ import { getPlatformBySlug, getPlatformWithAllPriceHistory } from "@/lib/queries
 import PriceHistoryChart from "@/components/PriceHistoryChart";
 import PriceBadge from "@/components/PriceBadge";
 import Header from "@/components/Header";
+import PlatformLogo from "@/components/PlatformLogo";
 
 export default async function PlatformDetail({
   params,
@@ -38,10 +39,7 @@ export default async function PlatformDetail({
 
       <main className="mx-auto max-w-4xl px-4 py-12">
         <div className="flex items-center gap-3 mb-8">
-          <div
-            className="w-4 h-4 rounded-full"
-            style={{ backgroundColor: platform.color ?? "#666" }}
-          />
+          <PlatformLogo platform={platform} size="lg" />
           <h1 className="text-2xl font-bold text-black dark:text-white">{platform.name}</h1>
         </div>
 

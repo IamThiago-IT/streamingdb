@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getDictionary, hasLocale } from "../dictionaries";
 import { getContents, getPlatforms } from "@/lib/queries";
 import Header from "@/components/Header";
+import PlatformLogo from "@/components/PlatformLogo";
 
 export default async function ContentsPage({
   params,
@@ -97,12 +98,13 @@ export default async function ContentsPage({
                   {c.availability.map((a) => (
                     <span
                       key={a.id}
-                      className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium"
+                      className="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium"
                       style={{
                         backgroundColor: (a.platform.color ?? "#666") + "20",
                         color: a.platform.color ?? "#666",
                       }}
                     >
+                      <PlatformLogo platform={a.platform} size="sm" />
                       {a.platform.name}
                     </span>
                   ))}

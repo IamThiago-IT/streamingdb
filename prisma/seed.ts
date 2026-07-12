@@ -8,18 +8,21 @@ const adapter = new PrismaBetterSqlite3({
 
 const prisma = new PrismaClient({ adapter });
 
+const bf = (domain: string) =>
+  `https://cdn.brandfetch.io/domain/${domain}/w/128/h/128/icon?c=1bxid64Mup7aczewSAYMX`;
+
 const platformsData = [
-  { name: "Looke", slug: "looke", color: "#6B3FA0", website: "https://looke.com.br" },
-  { name: "Prime Video", slug: "prime-video", color: "#00A8E1", website: "https://primevideo.com" },
-  { name: "Crunchyroll", slug: "crunchyroll", color: "#F47521", website: "https://crunchyroll.com" },
-  { name: "Netflix", slug: "netflix", color: "#E50914", website: "https://netflix.com" },
-  { name: "Globoplay", slug: "globoplay", color: "#D61E2C", website: "https://globoplay.globo.com" },
-  { name: "YouTube Premium", slug: "youtube-premium", color: "#FF0000", website: "https://youtube.com/premium" },
-  { name: "Disney+", slug: "disney-plus", color: "#113CCF", website: "https://disneyplus.com" },
-  { name: "HBO Max", slug: "hbo-max", color: "#5822B4", website: "https://hbomax.com" },
-  { name: "Apple TV+", slug: "apple-tv-plus", color: "#000000", website: "https://tv.apple.com" },
-  { name: "Paramount+", slug: "paramount-plus", color: "#0064FF", website: "https://paramountplus.com" },
-  { name: "MUBI", slug: "mubi", color: "#1C1C1C", website: "https://mubi.com" },
+  { name: "Looke", slug: "looke", color: "#6B3FA0", logo: bf("looke.com.br"), website: "https://looke.com.br" },
+  { name: "Prime Video", slug: "prime-video", color: "#00A8E1", logo: bf("primevideo.com"), website: "https://primevideo.com" },
+  { name: "Crunchyroll", slug: "crunchyroll", color: "#F47521", logo: bf("crunchyroll.com"), website: "https://crunchyroll.com" },
+  { name: "Netflix", slug: "netflix", color: "#E50914", logo: bf("netflix.com"), website: "https://netflix.com" },
+  { name: "Globoplay", slug: "globoplay", color: "#D61E2C", logo: bf("globoplay.globo.com"), website: "https://globoplay.globo.com" },
+  { name: "YouTube Premium", slug: "youtube-premium", color: "#FF0000", logo: bf("youtube.com"), website: "https://youtube.com/premium" },
+  { name: "Disney+", slug: "disney-plus", color: "#113CCF", logo: bf("disneyplus.com"), website: "https://disneyplus.com" },
+  { name: "HBO Max", slug: "hbo-max", color: "#5822B4", logo: bf("max.com"), website: "https://max.com" },
+  { name: "Apple TV+", slug: "apple-tv-plus", color: "#000000", logo: bf("tv.apple.com"), website: "https://tv.apple.com" },
+  { name: "Paramount+", slug: "paramount-plus", color: "#0064FF", logo: bf("paramountplus.com"), website: "https://paramountplus.com" },
+  { name: "MUBI", slug: "mubi", color: "#1C1C1C", logo: bf("mubi.com"), website: "https://mubi.com" },
 ];
 
 const plansData: Record<string, { name: string; price: number; quality?: string; ads: boolean; billingCycle?: string }[]> = {

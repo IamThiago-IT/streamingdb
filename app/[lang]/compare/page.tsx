@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getDictionary, hasLocale } from "../dictionaries";
 import { getPlatforms } from "@/lib/queries";
 import Header from "@/components/Header";
+import PlatformLogo from "@/components/PlatformLogo";
 
 export default async function ComparePage({
   params,
@@ -69,10 +70,7 @@ export default async function ComparePage({
                         href={`/${lang}/platforms/${p.slug}`}
                         className="flex items-center gap-2 hover:underline"
                       >
-                        <div
-                          className="w-3 h-3 rounded-full"
-                          style={{ backgroundColor: p.color ?? "#666" }}
-                        />
+                        <PlatformLogo platform={p} size="sm" />
                         {p.name}
                       </Link>
                     </th>

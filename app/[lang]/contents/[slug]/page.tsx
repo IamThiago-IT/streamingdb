@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getDictionary, hasLocale } from "../../dictionaries";
 import { getContentBySlug } from "@/lib/queries";
 import Header from "@/components/Header";
+import PlatformLogo from "@/components/PlatformLogo";
 
 export default async function ContentDetail({
   params,
@@ -46,10 +47,7 @@ export default async function ContentDetail({
                 className="flex items-center justify-between rounded-xl border border-zinc-200 dark:border-zinc-800 p-4 bg-white dark:bg-zinc-900 hover:border-zinc-300 dark:hover:border-zinc-700 transition-colors"
               >
                 <div className="flex items-center gap-3">
-                  <div
-                    className="w-3 h-3 rounded-full flex-shrink-0"
-                    style={{ backgroundColor: a.platform.color ?? "#666" }}
-                  />
+                  <PlatformLogo platform={a.platform} size="md" />
                   <span className="font-medium text-black dark:text-white">{a.platform.name}</span>
                 </div>
                 <span className="text-xs text-zinc-400">

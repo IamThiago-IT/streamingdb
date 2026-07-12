@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getDictionary, hasLocale } from "../dictionaries";
 import { getPlatforms } from "@/lib/queries";
 import Header from "@/components/Header";
+import PlatformLogo from "@/components/PlatformLogo";
 
 export default async function PlatformsPage({
   params,
@@ -47,10 +48,7 @@ export default async function PlatformsPage({
                         href={`/${lang}/platforms/${p.slug}`}
                         className="flex items-center gap-3 font-medium text-black dark:text-white"
                       >
-                        <div
-                          className="w-3 h-3 rounded-full flex-shrink-0"
-                          style={{ backgroundColor: p.color ?? "#666" }}
-                        />
+                        <PlatformLogo platform={p} size="md" />
                         {p.name}
                       </Link>
                     </td>
