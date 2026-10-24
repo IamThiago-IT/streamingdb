@@ -134,6 +134,53 @@ export async function getDashboardStats() {
   return { platformCount, contentCount, changeCount, cheapestPlan };
 }
 
+export async function getPlanPricesAtDates(platformId: string) {
+  const plans = await prisma.plan.findMany({
+    where: { platformId },
+    include: {
+      priceHistory: { orderBy: { recordedAt: "asc" } },
+    },
+  });
+
+  const periods = [
+    { key: "6m", months: 6 },
+    { key: "1y", months: 12 },
+    { key: "2y", months: 24 },
+  ];
+
+  return plans.map((plan) => {
+    const now = new Date();
+    const periodPrices: Record<string, { price: number; date: Date } | null> = {};
+
+    for (const period of periods) {
+      const target = new Date(now);
+      target.setMonth(target.getMonth() - period.months);
+
+      let closest: { price: number; date: Date } | null = null;
+      for (const h of plan.priceHistory) {
+        if (h.recordedAt <= target) {
+          closest = { price: h.price, date: h.recordedAt };
+        } else {
+          break;
+        }
+      }
+      periodPrices[period.key] = closest;
+    }
+
+    const lowestRecord = plan.priceHistory.length > 0
+      ? plan.priceHistory.reduce((min, h) => (h.price < min.price ? h : min))
+      : null;
+
+    return {
+      planId: plan.id,
+      planName: plan.name,
+      currentPrice: plan.price,
+      periodPrices,
+      lowestPrice: lowestRecord ? { price: lowestRecord.price, date: lowestRecord.recordedAt } : null,
+    };
+  });
+}
+
 export async function getPriceComparison() {
   const plans = await prisma.plan.findMany({
     include: { platform: true },

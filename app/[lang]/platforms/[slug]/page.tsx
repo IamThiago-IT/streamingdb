@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getDictionary, hasLocale } from "../../dictionaries";
-import { getPlatformBySlug, getPlatformWithAllPriceHistory } from "@/lib/queries";
+import { getPlatformBySlug, getPlatformWithAllPriceHistory, getPlanPricesAtDates } from "@/lib/queries";
 import PriceHistoryChart from "@/components/PriceHistoryChart";
 import PriceBadge from "@/components/PriceBadge";
 import Header from "@/components/Header";
@@ -18,6 +18,14 @@ export default async function PlatformDetail({
   const platformWithHistory = await getPlatformWithAllPriceHistory(slug);
 
   if (!platform || !platformWithHistory) notFound();
+
+  const planPrices = await getPlanPricesAtDates(platform.id);
+
+  const periods = [
+    { key: "6m", label: "Há 6 meses" },
+    { key: "1y", label: "Há 1 ano" },
+    { key: "2y", label: "Há 2 anos" },
+  ];
 
   const chartData = platformWithHistory.plans.flatMap((plan) =>
     plan.priceHistory.map((h) => ({
@@ -49,12 +57,14 @@ export default async function PlatformDetail({
             {platform.plans.map((plan) => {
               const latestPrice = plan.priceHistory[0];
               const previousPrice = plan.priceHistory[1];
+              const prices = planPrices.find((p) => p.planId === plan.id);
+
               return (
                 <div
                   key={plan.id}
                   className="rounded-xl border border-zinc-200 dark:border-zinc-800 p-5 bg-white dark:bg-zinc-900"
                 >
-                  <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center justify-between mb-3">
                     <div>
                       <div className="flex items-center gap-2">
                         <h3 className="font-medium text-black dark:text-white">{plan.name}</h3>
@@ -75,6 +85,38 @@ export default async function PlatformDetail({
                       </span>
                     </p>
                   </div>
+
+                  {prices && (
+                    <div className="flex flex-wrap gap-3 text-xs">
+                      {periods.map(({ key, label }) => {
+                        const entry = prices.periodPrices[key];
+                        if (!entry) return null;
+                        const diff = (latestPrice?.price ?? plan.price) - entry.price;
+                        return (
+                          <div key={key} className="rounded-lg bg-zinc-100 dark:bg-zinc-800 px-3 py-1.5">
+                            <span className="text-zinc-500">{label}:</span>
+                            <span className="ml-1.5 font-semibold tabular-nums text-black dark:text-white">
+                              R$ {entry.price.toFixed(2)}
+                            </span>
+                            {diff !== 0 && (
+                              <span className={diff > 0 ? "ml-1 text-red-500" : "ml-1 text-emerald-500"}>
+                                {diff > 0 ? "↑" : "↓"} {Math.abs(diff).toFixed(2)}
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })}
+
+                      {prices.lowestPrice && (
+                        <div className="rounded-lg bg-emerald-50 dark:bg-emerald-900/20 px-3 py-1.5 text-emerald-700 dark:text-emerald-400">
+                          <span className="font-semibold">Menor preço: R$ {prices.lowestPrice.price.toFixed(2)}</span>
+                          <span className="ml-1 opacity-70">
+                            ({new Date(prices.lowestPrice.date).toLocaleDateString("pt-BR")})
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               );
             })}
