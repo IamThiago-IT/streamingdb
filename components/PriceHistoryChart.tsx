@@ -25,23 +25,22 @@ export default function PriceHistoryChart({
 }) {
   if (data.length === 0) return null;
 
-  const grouped = data.reduce<Record<string, { date: string; [key: string]: number | string }[]>>(
+  type ChartEntry = { date: string } & Record<string, number | string>;
+  const grouped = data.reduce<Record<string, ChartEntry>>(
     (acc, point) => {
       const date = new Date(point.recordedAt).toLocaleDateString("pt-BR");
-      let entry = acc[date];
-      if (!entry) {
-        entry = { date };
-        acc[date] = entry;
+      if (!acc[date]) {
+        acc[date] = { date };
       }
-      entry[point.planName] = point.price;
+      acc[date][point.planName] = point.price;
       return acc;
     },
     {}
   );
 
-  const chartData = Object.entries(grouped)
-    .map(([date, values]) => ({ date, ...values }))
-    .sort((a, b) => a.date.localeCompare(b.date));
+  const chartData = Object.values(grouped).sort((a, b) =>
+    a.date.localeCompare(b.date)
+  );
 
   const planNames = [...new Set(data.map((d) => d.planName))];
   const colors = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6"];

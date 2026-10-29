@@ -1,11 +1,8 @@
 import "dotenv/config";
 import { PrismaClient } from "@/app/generated/prisma/client";
-import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
+import { createPrismaAdapter } from "@/lib/db-adapter";
 
-const adapter = new PrismaBetterSqlite3({
-  url: process.env.DATABASE_URL ?? "file:./dev.db",
-});
-const prisma = new PrismaClient({ adapter });
+const prisma = new PrismaClient({ adapter: createPrismaAdapter() });
 
 const newContent = [
   { title: "Fallout", type: "SERIES", year: 2024, genre: "Ficção Científica, Ação", rating: 8.5, platforms: ["prime-video"] },

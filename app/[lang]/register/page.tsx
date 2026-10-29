@@ -20,7 +20,7 @@ export default function RegisterPage() {
     setError("");
 
     const { error: signUpError } = await authClient.signUp.email({
-      name: name || undefined,
+      name: name || "",
       email,
       password,
     });

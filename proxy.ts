@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 const locales = ["en", "pt-BR"];
 const defaultLocale = "pt-BR";
+const PUBLIC_FILE = /\.[^/]+$/;
 
 function getLocale(request: Request): string {
   const acceptLang = request.headers.get("Accept-Language");
@@ -15,6 +16,14 @@ export function proxy(request: Request) {
   const url = new URL(request.url);
   const { pathname } = url;
 
+  if (
+    pathname.startsWith("/api") ||
+    pathname.startsWith("/_next") ||
+    PUBLIC_FILE.test(pathname)
+  ) {
+    return;
+  }
+
   const pathnameHasLocale = locales.some(
     (locale) => pathname.startsWith(`/${locale}/`) || pathname === `/${locale}`
   );
@@ -27,5 +36,5 @@ export function proxy(request: Request) {
 }
 
 export const config = {
-  matcher: ["/((?!_next|favicon\\.ico).*)"],
+  matcher: ["/((?!_next|api|favicon\\.ico|.*\\..*).*)"],
 };

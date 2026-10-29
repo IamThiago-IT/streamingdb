@@ -1,11 +1,8 @@
 import "dotenv/config";
 import { PrismaClient } from "@/app/generated/prisma/client";
-import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
+import { createPrismaAdapter } from "@/lib/db-adapter";
 
-const adapter = new PrismaBetterSqlite3({
-  url: process.env.DATABASE_URL ?? "file:./dev.db",
-});
-const prisma = new PrismaClient({ adapter });
+const prisma = new PrismaClient({ adapter: createPrismaAdapter() });
 
 async function detectPriceChanges() {
   console.log("=== Price Change Monitor ===\n");

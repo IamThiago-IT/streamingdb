@@ -1,12 +1,8 @@
 import "dotenv/config";
 import { PrismaClient } from "@/app/generated/prisma/client";
-import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
+import { createPrismaAdapter } from "@/lib/db-adapter";
 
-const adapter = new PrismaBetterSqlite3({
-  url: process.env.DATABASE_URL ?? "file:./dev.db",
-});
-
-const prisma = new PrismaClient({ adapter });
+const prisma = new PrismaClient({ adapter: createPrismaAdapter() });
 
 const bf = (domain: string) =>
   `https://cdn.brandfetch.io/domain/${domain}/w/128/h/128/icon?c=1bxid64Mup7aczewSAYMX`;

@@ -3,7 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { notFound } from "next/navigation";
 import { hasLocale } from "./dictionaries";
 import ThemeProvider from "./ThemeProvider";
-import { Analytics } from "@vercel/analytics/next"
+import { Analytics } from "@vercel/analytics/next";
 import "../globals.css";
 
 const geistSans = Geist({
@@ -48,6 +48,7 @@ export default async function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <ThemeProvider>{children}</ThemeProvider>
+        <Analytics />
       </body>
     </html>
   );
