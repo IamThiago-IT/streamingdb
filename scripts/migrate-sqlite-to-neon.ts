@@ -35,7 +35,8 @@ async function copy(
   label: string,
   sql: string,
   map: (r: Record<string, unknown>) => Record<string, unknown>,
-  write: (rows: Record<string, unknown>[]) => Promise<unknown>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  write: (rows: any[]) => Promise<unknown>
 ) {
   const rows = sqlite.prepare(sql).all() as Record<string, unknown>[];
   if (rows.length === 0) {

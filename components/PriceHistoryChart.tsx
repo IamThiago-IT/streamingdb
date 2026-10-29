@@ -67,7 +67,7 @@ export default function PriceHistoryChart({
               borderRadius: "8px",
               fontSize: "13px",
             }}
-            formatter={(value: number) => [`R$ ${value.toFixed(2)}`, ""]}
+            formatter={(value) => [`R$ ${Number(value).toFixed(2)}`, ""]}
           />
           {planNames.map((name, i) => (
             <Line
