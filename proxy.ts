@@ -1,40 +1,31 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { getSessionCookie } from "better-auth/cookies";
 
-const locales = ["en", "pt-BR"];
-const defaultLocale = "pt-BR";
-const PUBLIC_FILE = /\.[^/]+$/;
+/**
+ * Checagem otimística apenas pela presença do cookie de sessão (sem consulta ao
+ * banco, como recomendado pelo Better Auth para proxy/middleware). A validação
+ * real da sessão acontece em cada página/server action.
+ */
+export function proxy(request: NextRequest) {
+  const [, lang = "pt-BR", segment] = request.nextUrl.pathname.split("/");
+  const sessionCookie = getSessionCookie(request);
 
-function getLocale(request: Request): string {
-  const acceptLang = request.headers.get("Accept-Language");
-  if (!acceptLang) return defaultLocale;
-
-  if (acceptLang.startsWith("pt")) return "pt-BR";
-  return "en";
-}
-
-export function proxy(request: Request) {
-  const url = new URL(request.url);
-  const { pathname } = url;
-
-  if (
-    pathname.startsWith("/api") ||
-    pathname.startsWith("/_next") ||
-    PUBLIC_FILE.test(pathname)
-  ) {
-    return;
+  // Rota protegida: sem cookie → leva pro login.
+  if (segment === "profile" && !sessionCookie) {
+    return NextResponse.redirect(new URL(`/${lang}/login`, request.url));
   }
 
-  const pathnameHasLocale = locales.some(
-    (locale) => pathname.startsWith(`/${locale}/`) || pathname === `/${locale}`
-  );
+  // Quem já tem cookie não precisa ver login/registro.
+  if (
+    (segment === "login" || segment === "register") &&
+    sessionCookie
+  ) {
+    return NextResponse.redirect(new URL(`/${lang}`, request.url));
+  }
 
-  if (pathnameHasLocale) return;
-
-  const locale = getLocale(request);
-  url.pathname = `/${locale}${pathname}`;
-  return NextResponse.redirect(url);
+  return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/((?!_next|api|favicon\\.ico|.*\\..*).*)"],
+  matcher: ["/:lang/profile", "/:lang/login", "/:lang/register"],
 };
