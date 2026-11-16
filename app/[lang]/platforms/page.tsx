@@ -18,42 +18,42 @@ export default async function PlatformsPage({
   );
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-black">
+    <div className="min-h-screen bg-paper">
       <Header lang={lang} title={dict.home.title} />
 
       <main className="mx-auto max-w-4xl px-4 py-12">
-        <h1 className="text-2xl font-bold text-black dark:text-white mb-6">{dict.platforms.title}</h1>
+        <h1 className="mb-6 text-3xl text-ink">{dict.platforms.title}</h1>
 
-        <div className="overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-800">
+        <div className="overflow-x-auto rounded-md border border-line bg-surface">
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-zinc-100 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400">
-                <th className="text-left px-4 py-3 font-medium">#</th>
-                <th className="text-left px-4 py-3 font-medium">{dict.platforms.title}</th>
-                <th className="text-left px-4 py-3 font-medium">{dict.platforms.plans}</th>
-                <th className="text-right px-4 py-3 font-medium">{dict.platforms.price}</th>
+              <tr className="bg-surface-2 text-ink-faint">
+                <th className="px-4 py-3 text-left font-mono text-[10px] font-medium uppercase tracking-[0.12em]">#</th>
+                <th className="px-4 py-3 text-left font-mono text-[10px] font-medium uppercase tracking-[0.12em]">{dict.platforms.title}</th>
+                <th className="px-4 py-3 text-left font-mono text-[10px] font-medium uppercase tracking-[0.12em]">{dict.platforms.plans}</th>
+                <th className="px-4 py-3 text-right font-mono text-[10px] font-medium uppercase tracking-[0.12em]">{dict.platforms.price}</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
+            <tbody className="divide-y divide-line">
               {sorted.map((p, i) => {
                 const minPrice = Math.min(...p.plans.map((pl) => pl.price));
                 return (
                   <tr
                     key={p.id}
-                    className="bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
+                    className="transition-colors hover:bg-surface-2"
                   >
-                    <td className="px-4 py-3 text-zinc-400">{i + 1}</td>
+                    <td className="px-4 py-3 font-mono text-xs tnum text-ink-faint">{i + 1}</td>
                     <td className="px-4 py-3">
                       <Link
                         href={`/${lang}/platforms/${p.slug}`}
-                        className="flex items-center gap-3 font-medium text-black dark:text-white"
+                        className="flex items-center gap-3 font-medium text-ink"
                       >
                         <PlatformLogo platform={p} size="md" />
                         {p.name}
                       </Link>
                     </td>
-                    <td className="px-4 py-3 text-zinc-500">{p.plans.length}</td>
-                    <td className="px-4 py-3 text-right font-medium tabular-nums text-black dark:text-white">
+                    <td className="px-4 py-3 font-mono text-xs tnum text-ink-muted">{p.plans.length}</td>
+                    <td className="px-4 py-3 text-right font-mono text-[13px] tnum text-ink">
                       R$ {minPrice.toFixed(2)}
                     </td>
                   </tr>

@@ -1,25 +1,145 @@
 @import "tailwindcss";
+
 @custom-variant dark (&:is(.dark *));
 
+/* -------------------------------------------------------------------------
+   Papel & Tinta — sistema de cor
+   O chrome da interface fica quente e discreto; a saturação vem dos logos.
+   ------------------------------------------------------------------------- */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: light;
+
+  --paper: #f6f3ec;
+  --surface: #fffefa;
+  --surface-2: #f1ece1;
+
+  --ink: #1a1714;
+  --ink-muted: #5f5749;
+  --ink-faint: #8a8174;
+
+  --line: #e3dccf;
+  --line-strong: #d3c9b8;
+
+  --accent: #b4441f;
+  --accent-hover: #98381a;
+  --accent-soft: #f3e3d9;
+  --on-accent: #fffefa;
+
+  --rise: #b42318;
+  --rise-soft: #fbeae7;
+  --fall: #2f6b45;
+  --fall-soft: #e9f1ea;
+  --warn: #9a6b1f;
+  --warn-soft: #faf0dc;
+
+  --chart-1: #b4441f;
+  --chart-2: #2f7f78;
+  --chart-3: #9a6b1f;
+  --chart-4: #8a4a6e;
+  --chart-5: #5c6b3c;
+  --chart-6: #5b6773;
 }
 
 :root.dark {
-  --background: #0a0a0a;
-  --foreground: #ededed;
+  color-scheme: dark;
+
+  --paper: #14120f;
+  --surface: #1c1916;
+  --surface-2: #232019;
+
+  --ink: #efe9de;
+  --ink-muted: #a39a8c;
+  --ink-faint: #7a7264;
+
+  --line: #2e2a24;
+  --line-strong: #3b3630;
+
+  --accent: #e0703f;
+  --accent-hover: #ef8355;
+  --accent-soft: #3a2418;
+  --on-accent: #14120f;
+
+  --rise: #e58a80;
+  --rise-soft: #3a1d1a;
+  --fall: #7fc3a0;
+  --fall-soft: #1b2e24;
+  --warn: #d9ac64;
+  --warn-soft: #332a18;
+
+  --chart-1: #e0703f;
+  --chart-2: #5fb3a8;
+  --chart-3: #d9ac64;
+  --chart-4: #c48aa8;
+  --chart-5: #9baa6b;
+  --chart-6: #8fa0ad;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-paper: var(--paper);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-ink-faint: var(--ink-faint);
+
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-soft: var(--accent-soft);
+  --color-on-accent: var(--on-accent);
+
+  --color-rise: var(--rise);
+  --color-rise-soft: var(--rise-soft);
+  --color-fall: var(--fall);
+  --color-fall-soft: var(--fall-soft);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+
+  --font-sans: var(--font-public-sans);
+  --font-serif: var(--font-newsreader);
+  --font-mono: var(--font-plex-mono);
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--paper);
+    color: var(--ink);
+    font-family: var(--font-public-sans), ui-sans-serif, system-ui, sans-serif;
+    font-feature-settings: "kern", "liga", "calt";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Manchetes editoriais; o resto da UI fica na sans humanista. */
+  h1,
+  h2 {
+    font-family: var(--font-newsreader), Georgia, "Times New Roman", serif;
+    font-weight: 500;
+    letter-spacing: -0.012em;
+    font-optical-sizing: auto;
+  }
+}
+
+::selection {
+  background-color: var(--accent-soft);
+  color: var(--ink);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Preços e números sempre alinhados em coluna. */
+.tnum {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
 }

@@ -18,9 +18,11 @@
   "platforms": {
     "title": "Plataformas de Streaming",
     "plans": "Planos",
+    "planSingular": "plano",
     "price": "Preço",
     "priceRange": "a partir de",
     "contentCount": "conteúdos",
+    "contentSingular": "conteúdo",
     "noPlatforms": "Nenhuma plataforma encontrada"
   },
   "platform": {

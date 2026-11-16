@@ -7,11 +7,11 @@ import ChangeFilter from "@/components/ChangeFilter";
 
 function ChangeBadge({ type }: { type: string }) {
   const styles: Record<string, string> = {
-    PRICE_CHANGE: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-    CONTENT_ADDED: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-    CONTENT_REMOVED: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
-    NEW_PLATFORM: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-    PLAN_CHANGE: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
+    PRICE_CHANGE: "bg-warn-soft text-warn",
+    CONTENT_ADDED: "bg-fall-soft text-fall",
+    CONTENT_REMOVED: "bg-rise-soft text-rise",
+    NEW_PLATFORM: "bg-accent-soft text-accent",
+    PLAN_CHANGE: "bg-surface-2 text-ink-muted",
   };
 
   const labels: Record<string, string> = {
@@ -24,8 +24,8 @@ function ChangeBadge({ type }: { type: string }) {
 
   return (
     <span
-      className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
-        styles[type] ?? "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
+      className={`inline-flex items-center rounded-sm px-2 py-0.5 font-mono text-[10px] font-medium uppercase tracking-wider ${
+        styles[type] ?? "bg-surface-2 text-ink-muted"
       }`}
     >
       {labels[type] ?? type}
@@ -57,44 +57,46 @@ export default async function ChangesPage({
   const grouped = groupByDate(changes);
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-black">
+    <div className="min-h-screen bg-paper">
       <Header lang={lang} title={dict.home.title} />
 
       <main className="mx-auto max-w-4xl px-4 py-12">
-        <h1 className="text-2xl font-bold text-black dark:text-white mb-2">
+        <h1 className="mb-6 text-3xl text-ink">
           {dict.changes.title}
         </h1>
 
         <ChangeFilter lang={lang} />
 
         {Object.keys(grouped).length === 0 && (
-          <p className="text-zinc-500 text-center py-12">{dict.changes.noChanges}</p>
+          <p className="py-12 text-center text-ink-muted">{dict.changes.noChanges}</p>
         )}
 
         {Object.entries(grouped).map(([date, items]) => (
           <div key={date} className="mb-8">
-            <h2 className="text-sm font-semibold text-zinc-500 mb-3">{date}</h2>
-            <div className="space-y-2">
+            <h2 className="mb-3 font-mono text-[11px] uppercase tracking-[0.14em] text-ink-faint">{date}</h2>
+            <div className="grid gap-2">
               {items.map((c) => (
                 <div
                   key={c.id}
-                  className="flex items-center gap-3 rounded-lg border border-zinc-200 dark:border-zinc-800 p-4 bg-white dark:bg-zinc-900"
+                  className="flex min-w-0 items-start gap-3 rounded-md border border-line bg-surface px-4 py-3"
                 >
-                  <ChangeBadge type={c.type} />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-zinc-600 dark:text-zinc-400 truncate">
+                  <span className="mt-0.5 flex-shrink-0">
+                    <ChangeBadge type={c.type} />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm leading-snug text-ink-muted">
                       {c.description}
                     </p>
                     {c.platform && (
                       <Link
                         href={`/${lang}/platforms/${c.platform.slug}`}
-                        className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                        className="text-xs font-medium text-accent hover:text-accent-hover hover:underline"
                       >
                         {c.platform.name}
                       </Link>
                     )}
                   </div>
-                  <span className="text-xs text-zinc-400 flex-shrink-0">
+                  <span className="mt-0.5 flex-shrink-0 font-mono text-[11px] tnum text-ink-faint">
                     {new Date(c.createdAt).toLocaleTimeString("pt-BR", {
                       hour: "2-digit",
                       minute: "2-digit",

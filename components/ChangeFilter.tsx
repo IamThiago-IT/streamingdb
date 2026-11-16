@@ -32,10 +32,10 @@ export default function ChangeFilter({ lang }: { lang: string }) {
         <button
           key={t.value}
           onClick={() => handleChange(t.value)}
-          className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+          className={`rounded-sm px-3 py-1.5 text-xs font-medium transition-colors ${
             currentType === t.value
-              ? "bg-blue-600 text-white"
-              : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700"
+              ? "bg-accent text-on-accent"
+              : "bg-surface-2 text-ink-muted hover:bg-line hover:text-ink"
           }`}
         >
           {t.label}

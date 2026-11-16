@@ -7,6 +7,15 @@ import PriceBadge from "@/components/PriceBadge";
 import Header from "@/components/Header";
 import PlatformLogo from "@/components/PlatformLogo";
 
+const chartColors = [
+  "var(--chart-1)",
+  "var(--chart-2)",
+  "var(--chart-3)",
+  "var(--chart-4)",
+  "var(--chart-5)",
+  "var(--chart-6)",
+];
+
 export default async function PlatformDetail({
   params,
 }: PageProps<"/[lang]"> & { params: Promise<{ lang: string; slug: string }> }) {
@@ -36,24 +45,23 @@ export default async function PlatformDetail({
   );
 
   const planColorMap: Record<string, string> = {};
-  const colors = ["#3b82f6", "#10b981", "#f59e0b", "#8b5cf6", "#ef4444"];
   platform.plans.forEach((plan, i) => {
-    planColorMap[plan.name] = colors[i % colors.length];
+    planColorMap[plan.name] = chartColors[i % chartColors.length];
   });
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-black">
+    <div className="min-h-screen bg-paper">
       <Header lang={lang} title={dict.home.title} />
 
       <main className="mx-auto max-w-4xl px-4 py-12">
-        <div className="flex items-center gap-3 mb-8">
+        <div className="mb-8 flex items-center gap-3">
           <PlatformLogo platform={platform} size="lg" />
-          <h1 className="text-2xl font-bold text-black dark:text-white">{platform.name}</h1>
+          <h1 className="text-3xl text-ink">{platform.name}</h1>
         </div>
 
         <section className="mb-10">
-          <h2 className="text-lg font-semibold text-black dark:text-white mb-4">{dict.platform.plans}</h2>
-          <div className="grid gap-3">
+          <h2 className="mb-4 text-2xl text-ink">{dict.platform.plans}</h2>
+          <div className="grid gap-2">
             {platform.plans.map((plan) => {
               const latestPrice = plan.priceHistory[0];
               const previousPrice = plan.priceHistory[1];
@@ -62,44 +70,44 @@ export default async function PlatformDetail({
               return (
                 <div
                   key={plan.id}
-                  className="rounded-xl border border-zinc-200 dark:border-zinc-800 p-5 bg-white dark:bg-zinc-900"
+                  className="rounded-md border border-line bg-surface p-5"
                 >
-                  <div className="flex items-center justify-between mb-3">
+                  <div className="mb-3 flex items-start justify-between gap-4">
                     <div>
                       <div className="flex items-center gap-2">
-                        <h3 className="font-medium text-black dark:text-white">{plan.name}</h3>
+                        <h3 className="font-medium text-ink">{plan.name}</h3>
                         {previousPrice && (
                           <PriceBadge current={latestPrice!.price} previous={previousPrice.price} />
                         )}
                       </div>
-                      <p className="text-xs text-zinc-500">
+                      <p className="mt-1 text-xs text-ink-faint">
                         {plan.ads ? "Com anúncios" : "Sem anúncios"}
                         {plan.quality ? ` · ${plan.quality}` : ""}
                         {plan.billingCycle !== "mensal" ? ` · ${plan.billingCycle}` : ""}
                       </p>
                     </div>
-                    <p className="text-xl font-bold tabular-nums text-black dark:text-white">
+                    <p className="flex-shrink-0 font-mono text-xl font-medium tnum text-ink">
                       R$ {latestPrice?.price.toFixed(2) ?? plan.price.toFixed(2)}
-                      <span className="text-xs font-normal text-zinc-500">
+                      <span className="text-xs font-normal text-ink-faint">
                         /{plan.billingCycle === "anual" ? "ano" : "mês"}
                       </span>
                     </p>
                   </div>
 
                   {prices && (
-                    <div className="flex flex-wrap gap-3 text-xs">
+                    <div className="flex flex-wrap gap-2 text-xs">
                       {periods.map(({ key, label }) => {
                         const entry = prices.periodPrices[key];
                         if (!entry) return null;
                         const diff = (latestPrice?.price ?? plan.price) - entry.price;
                         return (
-                          <div key={key} className="rounded-lg bg-zinc-100 dark:bg-zinc-800 px-3 py-1.5">
-                            <span className="text-zinc-500">{label}:</span>
-                            <span className="ml-1.5 font-semibold tabular-nums text-black dark:text-white">
+                          <div key={key} className="rounded-sm bg-surface-2 px-3 py-1.5">
+                            <span className="text-ink-faint">{label}:</span>
+                            <span className="ml-1.5 font-mono font-medium tnum text-ink">
                               R$ {entry.price.toFixed(2)}
                             </span>
                             {diff !== 0 && (
-                              <span className={diff > 0 ? "ml-1 text-red-500" : "ml-1 text-emerald-500"}>
+                              <span className={`ml-1 font-mono tnum ${diff > 0 ? "text-rise" : "text-fall"}`}>
                                 {diff > 0 ? "↑" : "↓"} {Math.abs(diff).toFixed(2)}
                               </span>
                             )}
@@ -108,8 +116,8 @@ export default async function PlatformDetail({
                       })}
 
                       {prices.lowestPrice && (
-                        <div className="rounded-lg bg-emerald-50 dark:bg-emerald-900/20 px-3 py-1.5 text-emerald-700 dark:text-emerald-400">
-                          <span className="font-semibold">Menor preço: R$ {prices.lowestPrice.price.toFixed(2)}</span>
+                        <div className="rounded-sm bg-fall-soft px-3 py-1.5 text-fall">
+                          <span className="font-medium">Menor preço: R$ {prices.lowestPrice.price.toFixed(2)}</span>
                           <span className="ml-1 opacity-70">
                             ({new Date(prices.lowestPrice.date).toLocaleDateString("pt-BR")})
                           </span>
@@ -125,17 +133,17 @@ export default async function PlatformDetail({
 
         {chartData.length > 0 && (
           <section className="mb-10">
-            <h2 className="text-lg font-semibold text-black dark:text-white mb-4">
+            <h2 className="mb-4 text-2xl text-ink">
               {dict.platform.priceHistory}
             </h2>
-            <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 p-5 bg-white dark:bg-zinc-900">
+            <div className="rounded-md border border-line bg-surface p-5">
               <PriceHistoryChart data={chartData} planColors={planColorMap} />
             </div>
           </section>
         )}
 
         <section className="mb-10">
-          <h2 className="text-lg font-semibold text-black dark:text-white mb-4">
+          <h2 className="mb-4 text-2xl text-ink">
             {dict.platform.catalog} ({platform.availability.length} {dict.platform.contentCount})
           </h2>
           <div className="grid gap-2">
@@ -143,17 +151,17 @@ export default async function PlatformDetail({
               <Link
                 key={a.id}
                 href={`/${lang}/contents/${a.content.slug}`}
-                className="flex items-center justify-between rounded-lg border border-zinc-200 dark:border-zinc-800 p-3 bg-white dark:bg-zinc-900 hover:border-zinc-300 dark:hover:border-zinc-700 transition-colors"
+                className="flex min-w-0 items-center justify-between rounded-md border border-line bg-surface p-3 transition-colors hover:border-line-strong"
               >
-                <div>
-                  <p className="text-sm font-medium text-black dark:text-white">{a.content.title}</p>
-                  <p className="text-xs text-zinc-500">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium text-ink">{a.content.title}</p>
+                  <p className="mt-0.5 text-xs text-ink-faint">
                     {a.content.type === "MOVIE" ? dict.content.type_movie : dict.content.type_series}
                     {a.content.year ? ` · ${a.content.year}` : ""}
                   </p>
                 </div>
                 {a.content.rating && (
-                  <span className="text-xs font-medium text-amber-500">★ {a.content.rating.toFixed(1)}</span>
+                  <span className="font-mono text-xs text-warn">★ {a.content.rating.toFixed(1)}</span>
                 )}
               </Link>
             ))}
@@ -161,15 +169,15 @@ export default async function PlatformDetail({
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold text-black dark:text-white mb-4">{dict.platform.changes}</h2>
-          <div className="space-y-2">
+          <h2 className="mb-4 text-2xl text-ink">{dict.platform.changes}</h2>
+          <div className="grid gap-2">
             {platform.changeLog.map((c) => (
               <div
                 key={c.id}
-                className="flex items-center gap-3 rounded-lg border border-zinc-200 dark:border-zinc-800 p-3 bg-white dark:bg-zinc-900 text-sm"
+                className="flex min-w-0 items-start gap-3 rounded-md border border-line bg-surface px-4 py-3 text-sm"
               >
-                <span className="text-zinc-600 dark:text-zinc-400">{c.description}</span>
-                <span className="ml-auto text-xs text-zinc-400">
+                <span className="min-w-0 flex-1 leading-snug text-ink-muted">{c.description}</span>
+                <span className="mt-0.5 flex-shrink-0 font-mono text-xs tnum text-ink-faint">
                   {new Date(c.createdAt).toLocaleDateString("pt-BR")}
                 </span>
               </div>

@@ -5,14 +5,31 @@ import { getDashboardStats, getRecentChanges, getPlatforms, getPriceComparison }
 import Header from "@/components/Header";
 import PlatformLogo from "@/components/PlatformLogo";
 
-function ChangeIcon({ type }: { type: string }) {
-  switch (type) {
-    case "PRICE_CHANGE": return <span className="text-amber-500">💰</span>;
-    case "CONTENT_ADDED": return <span className="text-emerald-500">➕</span>;
-    case "CONTENT_REMOVED": return <span className="text-red-500">➖</span>;
-    case "NEW_PLATFORM": return <span className="text-blue-500">🆕</span>;
-    default: return <span className="text-zinc-400">•</span>;
-  }
+function ChangeMark({ type }: { type: string }) {
+  const marks: Record<string, { glyph: string; className: string }> = {
+    PRICE_CHANGE: { glyph: "R$", className: "bg-warn-soft text-warn" },
+    CONTENT_ADDED: { glyph: "+", className: "bg-fall-soft text-fall" },
+    CONTENT_REMOVED: { glyph: "−", className: "bg-rise-soft text-rise" },
+    NEW_PLATFORM: { glyph: "N", className: "bg-accent-soft text-accent" },
+  };
+  const mark = marks[type] ?? { glyph: "·", className: "bg-surface-2 text-ink-faint" };
+  const isPrice = type === "PRICE_CHANGE";
+
+  return (
+    <span
+      className={`flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-sm font-mono font-semibold ${isPrice ? "text-[9px]" : "text-xs"} ${mark.className}`}
+    >
+      {mark.glyph}
+    </span>
+  );
+}
+
+function Kicker({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-ink-faint">
+      {children}
+    </p>
+  );
 }
 
 export default async function Home({
@@ -27,37 +44,46 @@ export default async function Home({
   const platforms = await getPlatforms();
   const comparison = await getPriceComparison();
 
+  const ledger = [
+    { value: String(stats.platformCount), label: dict.home.stats.platforms, tone: "text-ink" },
+    { value: String(stats.contentCount), label: dict.home.stats.contents, tone: "text-ink" },
+    { value: String(stats.changeCount), label: dict.home.stats.changes, tone: "text-ink" },
+  ];
+
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-black">
+    <div className="min-h-screen bg-paper">
       <Header lang={lang} title={dict.home.title} />
 
       <main className="mx-auto max-w-6xl px-4 py-12">
-        <section className="mb-12">
-          <h1 className="text-3xl font-bold tracking-tight text-black dark:text-white mb-2">
+        <section className="mb-10">
+          <Kicker>Preços · Catálogo · Mudanças</Kicker>
+          <h1 className="mt-3 max-w-3xl text-4xl leading-[1.08] text-ink md:text-5xl">
             {dict.home.title}
           </h1>
-          <p className="text-zinc-600 dark:text-zinc-400 mb-8">{dict.home.description}</p>
+          <p className="mt-4 max-w-2xl text-base leading-relaxed text-ink-muted">
+            {dict.home.description}
+          </p>
+        </section>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 p-5 bg-white dark:bg-zinc-900">
-              <p className="text-2xl font-bold text-black dark:text-white">{stats.platformCount}</p>
-              <p className="text-sm text-zinc-500">{dict.home.stats.platforms}</p>
-            </div>
-            <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 p-5 bg-white dark:bg-zinc-900">
-              <p className="text-2xl font-bold text-black dark:text-white">{stats.contentCount}</p>
-              <p className="text-sm text-zinc-500">{dict.home.stats.contents}</p>
-            </div>
-            <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 p-5 bg-white dark:bg-zinc-900">
-              <p className="text-2xl font-bold text-black dark:text-white">{stats.changeCount}</p>
-              <p className="text-sm text-zinc-500">{dict.home.stats.changes}</p>
-            </div>
+        <section className="mb-12">
+          <div className="grid grid-cols-2 gap-px border border-line bg-line md:grid-cols-4">
+            {ledger.map((item) => (
+              <div key={item.label} className="bg-paper px-5 py-5">
+                <p className={`whitespace-nowrap font-mono text-2xl font-medium tnum md:text-3xl ${item.tone}`}>
+                  {item.value}
+                </p>
+                <p className="mt-1 text-xs uppercase tracking-wider text-ink-faint">
+                  {item.label}
+                </p>
+              </div>
+            ))}
             {stats.cheapestPlan && (
-              <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 p-5 bg-white dark:bg-zinc-900">
-                <p className="text-2xl font-bold text-emerald-600">
+              <div className="bg-paper px-5 py-5">
+                <p className="whitespace-nowrap font-mono text-2xl font-medium tnum text-fall md:text-3xl">
                   R$ {stats.cheapestPlan.price.toFixed(2)}
                 </p>
-                <p className="text-sm text-zinc-500">
-                  {dict.home.cheapest}: {stats.cheapestPlan.platform.name}
+                <p className="mt-1 text-xs uppercase tracking-wider text-ink-faint">
+                  {dict.home.cheapest} · {stats.cheapestPlan.platform.name}
                 </p>
               </div>
             )}
@@ -66,25 +92,30 @@ export default async function Home({
 
         {comparison.cheapest.length > 0 && (
           <section className="mb-12">
-            <h2 className="text-lg font-semibold text-black dark:text-white mb-4">
-              💰 Comparação de Preços
-            </h2>
-            <div className="grid md:grid-cols-2 gap-4">
-              <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 p-5 bg-white dark:bg-zinc-900">
-                <h3 className="text-sm font-medium text-zinc-500 mb-3">Planos mais baratos</h3>
-                <div className="space-y-2">
+            <div className="mb-4 flex items-end justify-between">
+              <h2 className="text-2xl text-ink">Comparação de preços</h2>
+              <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-ink-faint">
+                mensal
+              </span>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="rounded-md border border-line bg-surface p-5">
+                <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-ink-faint">
+                  Planos mais baratos
+                </h3>
+                <div className="space-y-1">
                   {comparison.cheapest.map((plan) => (
                     <Link
                       key={plan.id}
                       href={`/${lang}/platforms/${plan.platform.slug}`}
-                      className="flex items-center justify-between text-sm hover:bg-zinc-50 dark:hover:bg-zinc-800/50 -mx-2 px-2 py-1 rounded"
+                      className="-mx-2 flex min-w-0 items-center justify-between rounded-sm px-2 py-1.5 text-sm transition-colors hover:bg-surface-2"
                     >
-                      <div className="flex items-center gap-2">
+                      <div className="flex min-w-0 items-center gap-2">
                         <PlatformLogo platform={plan.platform} size="sm" />
-                        <span className="text-black dark:text-white">{plan.platform.name}</span>
-                        <span className="text-zinc-400">· {plan.name}</span>
+                        <span className="truncate text-ink">{plan.platform.name}</span>
+                        <span className="hidden truncate text-ink-faint sm:inline">· {plan.name}</span>
                       </div>
-                      <span className="font-medium tabular-nums text-black dark:text-white">
+                      <span className="ml-2 flex-shrink-0 font-mono text-[13px] tnum text-ink">
                         R$ {plan.price.toFixed(2)}
                       </span>
                     </Link>
@@ -92,21 +123,23 @@ export default async function Home({
                 </div>
               </div>
 
-              <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 p-5 bg-white dark:bg-zinc-900">
-                <h3 className="text-sm font-medium text-zinc-500 mb-3">Sem anúncios (mais baratos)</h3>
-                <div className="space-y-2">
+              <div className="rounded-md border border-line bg-surface p-5">
+                <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-ink-faint">
+                  Sem anúncios (mais baratos)
+                </h3>
+                <div className="space-y-1">
                   {comparison.cheapestNoAds.map((plan) => (
                     <Link
                       key={plan.id}
                       href={`/${lang}/platforms/${plan.platform.slug}`}
-                      className="flex items-center justify-between text-sm hover:bg-zinc-50 dark:hover:bg-zinc-800/50 -mx-2 px-2 py-1 rounded"
+                      className="-mx-2 flex min-w-0 items-center justify-between rounded-sm px-2 py-1.5 text-sm transition-colors hover:bg-surface-2"
                     >
-                      <div className="flex items-center gap-2">
+                      <div className="flex min-w-0 items-center gap-2">
                         <PlatformLogo platform={plan.platform} size="sm" />
-                        <span className="text-black dark:text-white">{plan.platform.name}</span>
-                        <span className="text-zinc-400">· {plan.name}</span>
+                        <span className="truncate text-ink">{plan.platform.name}</span>
+                        <span className="hidden truncate text-ink-faint sm:inline">· {plan.name}</span>
                       </div>
-                      <span className="font-medium tabular-nums text-black dark:text-white">
+                      <span className="ml-2 flex-shrink-0 font-mono text-[13px] tnum text-ink">
                         R$ {plan.price.toFixed(2)}
                       </span>
                     </Link>
@@ -118,56 +151,74 @@ export default async function Home({
         )}
 
         <section className="mb-12">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-black dark:text-white">{dict.nav.platforms}</h2>
+          <div className="mb-4 flex items-end justify-between">
+            <h2 className="text-2xl text-ink">{dict.nav.platforms}</h2>
             <Link
               href={`/${lang}/platforms`}
-              className="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400"
+              className="text-sm font-medium text-accent transition-colors hover:text-accent-hover"
             >
               Ver todas →
             </Link>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {platforms.map((p) => (
-              <Link
-                key={p.id}
-                href={`/${lang}/platforms/${p.slug}`}
-                className="rounded-lg border border-zinc-200 dark:border-zinc-800 p-4 bg-white dark:bg-zinc-900 hover:border-zinc-300 dark:hover:border-zinc-700 transition-colors"
-              >
-                <div className="flex items-center gap-3">
-                  <PlatformLogo platform={p} size="md" />
-                  <span className="font-medium text-sm text-black dark:text-white truncate">
-                    {p.name}
-                  </span>
-                </div>
-                <p className="mt-2 text-xs text-zinc-500">
-                  {p.plans.length} {dict.platforms.plans} · {p._count.availability}{" "}
-                  {dict.platforms.contentCount}
-                </p>
-              </Link>
-            ))}
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+            {platforms.map((p) => {
+              const minPrice = p.plans.length > 0 ? Math.min(...p.plans.map((pl) => pl.price)) : null;
+              return (
+                <Link
+                  key={p.id}
+                  href={`/${lang}/platforms/${p.slug}`}
+                  className="min-w-0 rounded-md border border-line bg-surface p-4 transition-colors hover:border-line-strong"
+                >
+                  <div className="flex min-w-0 items-center justify-between gap-2">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <PlatformLogo platform={p} size="md" />
+                      <span className="min-w-0 text-[13px] font-medium leading-tight text-ink sm:text-sm">
+                        {p.name}
+                      </span>
+                    </div>
+                    {minPrice !== null && (
+                      <span className="hidden flex-shrink-0 font-mono text-[11px] tnum text-ink-faint sm:inline">
+                        R$ {minPrice.toFixed(2)}
+                      </span>
+                    )}
+                  </div>
+                  <p className="mt-3 text-xs text-ink-faint">
+                    {p.plans.length}{" "}
+                    {p.plans.length === 1 ? dict.platforms.planSingular : dict.platforms.plans} ·{" "}
+                    {p._count.availability}{" "}
+                    {p._count.availability === 1
+                      ? dict.platforms.contentSingular
+                      : dict.platforms.contentCount}
+                  </p>
+                </Link>
+              );
+            })}
           </div>
         </section>
 
         <section>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-black dark:text-white">{dict.nav.changes}</h2>
+          <div className="mb-4 flex items-end justify-between">
+            <h2 className="text-2xl text-ink">{dict.nav.changes}</h2>
             <Link
               href={`/${lang}/changes`}
-              className="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400"
+              className="text-sm font-medium text-accent transition-colors hover:text-accent-hover"
             >
               Ver todas →
             </Link>
           </div>
-          <div className="space-y-2">
+          <div className="grid gap-2">
             {changes.map((c) => (
               <div
                 key={c.id}
-                className="flex items-center gap-3 rounded-lg border border-zinc-200 dark:border-zinc-800 p-3 bg-white dark:bg-zinc-900 text-sm"
+                className="flex min-w-0 items-start gap-3 rounded-md border border-line bg-surface px-4 py-3 text-sm"
               >
-                <ChangeIcon type={c.type} />
-                <span className="text-zinc-600 dark:text-zinc-400">{c.description}</span>
-                <span className="ml-auto text-xs text-zinc-400">
+                <span className="mt-0.5 flex-shrink-0">
+                  <ChangeMark type={c.type} />
+                </span>
+                <span className="min-w-0 flex-1 text-sm leading-snug text-ink-muted">
+                  {c.description}
+                </span>
+                <span className="mt-0.5 flex-shrink-0 font-mono text-[11px] tnum text-ink-faint">
                   {new Date(c.createdAt).toLocaleDateString("pt-BR")}
                 </span>
               </div>

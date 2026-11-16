@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useTheme } from "@/app/[lang]/ThemeProvider";
 import { authClient } from "@/lib/auth-client";
+import SignOutButton from "@/components/auth/SignOutButton";
 
 export default function HeaderActions({ lang }: { lang: string }) {
   const { theme, toggle } = useTheme();
@@ -11,23 +12,26 @@ export default function HeaderActions({ lang }: { lang: string }) {
   return (
     <div className="flex items-center gap-2">
       {session ? (
-        <Link
-          href={`/${lang}/profile`}
-          className="flex items-center gap-2 rounded-lg bg-zinc-100 px-3 py-1.5 text-xs font-medium text-zinc-700 transition-colors hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
-        >
-          {session.user.image ? (
-            <img src={session.user.image} alt="" className="h-5 w-5 rounded-full" />
-          ) : (
-            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-[10px] text-white">
-              {session.user.email[0].toUpperCase()}
-            </span>
-          )}
-          {session.user.name ?? session.user.email}
-        </Link>
+        <>
+          <Link
+            href={`/${lang}/profile`}
+            className="flex items-center gap-2 rounded bg-surface-2 px-3 py-1.5 text-xs font-medium text-ink-muted transition-colors hover:bg-line"
+          >
+            {session.user.image ? (
+              <img src={session.user.image} alt="" className="h-5 w-5 rounded-full" />
+            ) : (
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-accent text-[10px] text-on-accent">
+                {session.user.email[0].toUpperCase()}
+              </span>
+            )}
+            {session.user.name ?? session.user.email}
+          </Link>
+          <SignOutButton lang={lang} />
+        </>
       ) : (
         <Link
           href={`/${lang}/login`}
-          className="rounded-lg bg-zinc-100 px-3 py-1.5 text-xs font-medium text-zinc-700 transition-colors hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+          className="rounded bg-surface-2 px-3 py-1.5 text-xs font-medium text-ink-muted transition-colors hover:bg-line"
         >
           Entrar
         </Link>
@@ -35,7 +39,7 @@ export default function HeaderActions({ lang }: { lang: string }) {
       <button
         onClick={toggle}
         aria-label={theme === "light" ? "Modo escuro" : "Modo claro"}
-        className="flex h-8 w-8 items-center justify-center rounded-lg bg-zinc-100 text-zinc-600 transition-colors hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700"
+        className="flex h-8 w-8 items-center justify-center rounded bg-surface-2 text-ink-muted transition-colors hover:bg-line hover:text-ink"
       >
         {theme === "light" ? (
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4">

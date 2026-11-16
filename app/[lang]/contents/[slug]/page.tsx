@@ -17,16 +17,16 @@ export default async function ContentDetail({
   if (!content) notFound();
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-black">
+    <div className="min-h-screen bg-paper">
       <Header lang={lang} title={dict.home.title} />
 
       <main className="mx-auto max-w-4xl px-4 py-12">
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-black dark:text-white">{content.title}</h1>
+        <div className="mb-10">
+          <h1 className="text-3xl text-ink">{content.title}</h1>
           {content.originalTitle && content.originalTitle !== content.title && (
-            <p className="text-zinc-500 mt-1">{content.originalTitle}</p>
+            <p className="mt-1 text-ink-muted">{content.originalTitle}</p>
           )}
-          <div className="flex flex-wrap gap-3 mt-3 text-sm text-zinc-500">
+          <div className="mt-3 flex flex-wrap gap-3 text-sm text-ink-faint">
             <span>{content.type === "MOVIE" ? dict.content.type_movie : dict.content.type_series}</span>
             {content.year && <span>· {dict.content.year}: {content.year}</span>}
             {content.genre && <span>· {dict.content.genre}: {content.genre}</span>}
@@ -35,22 +35,22 @@ export default async function ContentDetail({
         </div>
 
         <section className="mb-10">
-          <h2 className="text-lg font-semibold text-black dark:text-white mb-4">{dict.content.availability}</h2>
-          <div className="grid gap-3">
+          <h2 className="mb-4 text-2xl text-ink">{dict.content.availability}</h2>
+          <div className="grid gap-2">
             {content.availability.length === 0 && (
-              <p className="text-zinc-500 text-sm">{dict.contents.noResults}</p>
+              <p className="text-sm text-ink-muted">{dict.contents.noResults}</p>
             )}
             {content.availability.map((a) => (
               <Link
                 key={a.id}
                 href={`/${lang}/platforms/${a.platform.slug}`}
-                className="flex items-center justify-between rounded-xl border border-zinc-200 dark:border-zinc-800 p-4 bg-white dark:bg-zinc-900 hover:border-zinc-300 dark:hover:border-zinc-700 transition-colors"
+                className="flex min-w-0 items-center justify-between rounded-md border border-line bg-surface p-4 transition-colors hover:border-line-strong"
               >
-                <div className="flex items-center gap-3">
+                <div className="flex min-w-0 items-center gap-3">
                   <PlatformLogo platform={a.platform} size="md" />
-                  <span className="font-medium text-black dark:text-white">{a.platform.name}</span>
+                  <span className="truncate font-medium text-ink">{a.platform.name}</span>
                 </div>
-                <span className="text-xs text-zinc-400">
+                <span className="font-mono text-xs tnum text-ink-faint">
                   {new Date(a.addedAt).toLocaleDateString("pt-BR")}
                 </span>
               </Link>
@@ -60,15 +60,15 @@ export default async function ContentDetail({
 
         {content.changeLog.length > 0 && (
           <section>
-            <h2 className="text-lg font-semibold text-black dark:text-white mb-4">{dict.content.changes}</h2>
-            <div className="space-y-2">
+            <h2 className="mb-4 text-2xl text-ink">{dict.content.changes}</h2>
+            <div className="grid gap-2">
               {content.changeLog.map((c) => (
                 <div
                   key={c.id}
-                  className="flex items-center gap-3 rounded-lg border border-zinc-200 dark:border-zinc-800 p-3 bg-white dark:bg-zinc-900 text-sm"
+                  className="flex min-w-0 items-start gap-3 rounded-md border border-line bg-surface px-4 py-3 text-sm"
                 >
-                  <span className="text-zinc-600 dark:text-zinc-400">{c.description}</span>
-                  <span className="ml-auto text-xs text-zinc-400">
+                  <span className="min-w-0 flex-1 leading-snug text-ink-muted">{c.description}</span>
+                  <span className="mt-0.5 flex-shrink-0 font-mono text-xs tnum text-ink-faint">
                     {new Date(c.createdAt).toLocaleDateString("pt-BR")}
                   </span>
                 </div>

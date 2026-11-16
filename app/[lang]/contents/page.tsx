@@ -30,23 +30,23 @@ export default async function ContentsPage({
   });
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-black">
+    <div className="min-h-screen bg-paper">
       <Header lang={lang} title={dict.home.title} />
 
       <main className="mx-auto max-w-6xl px-4 py-12">
-        <h1 className="text-2xl font-bold text-black dark:text-white mb-6">{dict.contents.title}</h1>
+        <h1 className="mb-6 text-3xl text-ink">{dict.contents.title}</h1>
 
-        <form className="flex flex-wrap gap-3 mb-8">
+        <form className="mb-8 flex flex-wrap gap-3">
           <input
             name="q"
             defaultValue={query}
             placeholder={dict.contents.searchPlaceholder}
-            className="flex-1 min-w-[200px] rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-4 py-2 text-sm text-black dark:text-white placeholder-zinc-400"
+            className="min-w-[200px] flex-1 rounded border border-line bg-surface px-4 py-2 text-sm text-ink placeholder:text-ink-faint"
           />
           <select
             name="type"
             defaultValue={type}
-            className="rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-black dark:text-white"
+            className="rounded border border-line bg-surface px-3 py-2 text-sm text-ink"
           >
             <option value="">{dict.contents.all}</option>
             <option value="MOVIE">{dict.contents.movies}</option>
@@ -55,7 +55,7 @@ export default async function ContentsPage({
           <select
             name="platform"
             defaultValue={platform}
-            className="rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-black dark:text-white"
+            className="rounded border border-line bg-surface px-3 py-2 text-sm text-ink"
           >
             <option value="">{dict.contents.all}</option>
             {platforms.map((p) => (
@@ -64,33 +64,33 @@ export default async function ContentsPage({
           </select>
           <button
             type="submit"
-            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+            className="rounded bg-accent px-4 py-2 text-sm font-medium text-on-accent transition-colors hover:bg-accent-hover"
           >
             Filtrar
           </button>
         </form>
 
-        <div className="grid gap-3">
+        <div className="grid gap-2">
           {contents.length === 0 && (
-            <p className="text-zinc-500 text-center py-12">{dict.contents.noResults}</p>
+            <p className="py-12 text-center text-ink-muted">{dict.contents.noResults}</p>
           )}
           {contents.map((c) => (
             <Link
               key={c.id}
               href={`/${lang}/contents/${c.slug}`}
-              className="rounded-lg border border-zinc-200 dark:border-zinc-800 p-4 bg-white dark:bg-zinc-900 hover:border-zinc-300 dark:hover:border-zinc-700 transition-colors"
+              className="rounded-md border border-line bg-surface p-4 transition-colors hover:border-line-strong"
             >
-              <div className="flex items-start justify-between">
+              <div className="flex items-start justify-between gap-4">
                 <div>
-                  <h3 className="font-medium text-black dark:text-white">{c.title}</h3>
-                  <p className="text-xs text-zinc-500 mt-1">
+                  <h3 className="font-medium text-ink">{c.title}</h3>
+                  <p className="mt-1 text-xs text-ink-faint">
                     {c.type === "MOVIE" ? dict.content.type_movie : dict.content.type_series}
                     {c.year ? ` · ${c.year}` : ""}
                     {c.genre ? ` · ${c.genre}` : ""}
                   </p>
                 </div>
                 {c.rating && (
-                  <span className="text-sm font-medium text-amber-500">★ {c.rating.toFixed(1)}</span>
+                  <span className="font-mono text-sm text-warn">★ {c.rating.toFixed(1)}</span>
                 )}
               </div>
               {c.availability.length > 0 && (
@@ -98,10 +98,9 @@ export default async function ContentsPage({
                   {c.availability.map((a) => (
                     <span
                       key={a.id}
-                      className="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium"
+                      className="inline-flex items-center gap-1.5 rounded-sm px-2 py-0.5 text-xs font-medium text-ink"
                       style={{
-                        backgroundColor: (a.platform.color ?? "#666") + "20",
-                        color: a.platform.color ?? "#666",
+                        backgroundColor: (a.platform.color ?? "#666") + "18",
                       }}
                     >
                       <PlatformLogo platform={a.platform} size="sm" />
@@ -115,15 +114,15 @@ export default async function ContentsPage({
         </div>
 
         {pagination.totalPages > 1 && (
-          <div className="flex justify-center gap-2 mt-8">
+          <div className="mt-8 flex justify-center gap-2">
             {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map((p) => (
               <Link
                 key={p}
                 href={`/${lang}/contents?page=${p}${query ? `&q=${query}` : ""}${type ? `&type=${type}` : ""}${platform ? `&platform=${platform}` : ""}`}
-                className={`flex h-8 w-8 items-center justify-center rounded text-sm ${
+                className={`flex h-8 w-8 items-center justify-center rounded font-mono text-xs tnum ${
                   p === page
-                    ? "bg-blue-600 text-white"
-                    : "border border-zinc-300 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                    ? "bg-accent text-on-accent"
+                    : "border border-line text-ink-muted transition-colors hover:bg-surface-2 hover:text-ink"
                 }`}
               >
                 {p}

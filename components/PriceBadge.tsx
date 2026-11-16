@@ -12,14 +12,14 @@ export default function PriceBadge({
 
   if (diff > 0) {
     return (
-      <span className="inline-flex items-center gap-0.5 rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700 dark:bg-red-900/30 dark:text-red-400">
+      <span className="inline-flex items-center gap-0.5 rounded-sm bg-rise-soft px-2 py-0.5 font-mono text-[11px] font-medium tnum text-rise">
         ↑ R$ {diff.toFixed(2)} ({pct}%)
       </span>
     );
   }
 
   return (
-    <span className="inline-flex items-center gap-0.5 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+    <span className="inline-flex items-center gap-0.5 rounded-sm bg-fall-soft px-2 py-0.5 font-mono text-[11px] font-medium tnum text-fall">
       ↓ R$ {Math.abs(diff).toFixed(2)} ({Math.abs(Number(pct))}%)
     </span>
   );

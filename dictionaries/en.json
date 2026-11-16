@@ -18,9 +18,11 @@
   "platforms": {
     "title": "Streaming Platforms",
     "plans": "Plans",
+    "planSingular": "plan",
     "price": "Price",
     "priceRange": "from",
     "contentCount": "titles",
+    "contentSingular": "title",
     "noPlatforms": "No platforms found"
   },
   "platform": {
