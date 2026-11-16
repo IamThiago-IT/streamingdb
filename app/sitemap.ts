@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { locales } from "@/lib/locales";
 
 export default async function sitemap() {
   const baseUrl = "https://streamingdb.app";
@@ -7,8 +8,6 @@ export default async function sitemap() {
     prisma.platform.findMany({ select: { slug: true } }),
     prisma.content.findMany({ select: { slug: true } }),
   ]);
-
-  const locales = ["en", "pt-BR"];
 
   const staticPages = locales.flatMap((locale) => [
     { url: `${baseUrl}/${locale}`, lastModified: new Date(), changeFrequency: "daily" as const, priority: 1 },
