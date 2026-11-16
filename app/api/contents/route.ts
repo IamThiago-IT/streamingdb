@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { containsInsensitive } from "@/lib/db-filters";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -14,13 +15,13 @@ export async function GET(request: NextRequest) {
 
   if (query) {
     where.OR = [
-      { title: { contains: query } },
-      { originalTitle: { contains: query } },
+      { title: containsInsensitive(query) },
+      { originalTitle: containsInsensitive(query) },
     ];
   }
 
   if (type) where.type = type;
-  if (genre) where.genre = { contains: genre };
+  if (genre) where.genre = containsInsensitive(genre);
   if (platform) {
     where.availability = {
       some: { platform: { slug: platform } },

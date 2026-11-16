@@ -1,4 +1,5 @@
 import { prisma } from "./db";
+import { containsInsensitive } from "./db-filters";
 
 export async function getPlatforms() {
   return prisma.platform.findMany({
@@ -64,12 +65,12 @@ export async function getContents(params: {
 
   if (query) {
     where.OR = [
-      { title: { contains: query } },
-      { originalTitle: { contains: query } },
+      { title: containsInsensitive(query) },
+      { originalTitle: containsInsensitive(query) },
     ];
   }
   if (type) where.type = type;
-  if (genre) where.genre = { contains: genre };
+  if (genre) where.genre = containsInsensitive(genre);
   if (platform) {
     where.availability = { some: { platform: { slug: platform }, available: true } };
   }

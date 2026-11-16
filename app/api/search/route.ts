@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { containsInsensitive } from "@/lib/db-filters";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -11,14 +12,14 @@ export async function GET(request: NextRequest) {
 
   const [platforms, contents] = await Promise.all([
     prisma.platform.findMany({
-      where: { name: { contains: q } },
+      where: { name: containsInsensitive(q) },
       take: 5,
     }),
     prisma.content.findMany({
       where: {
         OR: [
-          { title: { contains: q } },
-          { originalTitle: { contains: q } },
+          { title: containsInsensitive(q) },
+          { originalTitle: containsInsensitive(q) },
         ],
       },
       include: {
