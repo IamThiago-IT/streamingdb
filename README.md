@@ -141,6 +141,8 @@ streamingdb/
 - `pnpm build` - Compila para produção
 - `pnpm start` - Inicia servidor em produção
 - `pnpm lint` - Executa verificações de linting
+- `pnpm seed:offers --file=...` - Importa ofertas de preço nativo (CSV)
+- `pnpm validate:offers` - Valida cobertura e consistência das ofertas
 - `pnpm prisma studio` - Abre Prisma Studio para gerenciar dados
 
 ## 📦 Build para Produção
@@ -164,6 +166,28 @@ pnpm prisma studio
 # Resetar banco (cuidado!)
 pnpm prisma migrate reset
 ```
+
+## 🌎 Preços por país
+
+O preço é **nativo por país** — não há conversão cambial. Cada país tem sua
+moeda (`lib/countries.ts`), e a mesma moeda em países diferentes (EUR em `DE` e
+`PT`, por exemplo) representa ofertas distintas.
+
+- O país é escolhido no header; a seleção fica no cookie `sdb_country`.
+- `Plan` é o tier canônico; `PlanOffer` guarda valor, moeda, impostos e ciclo.
+- `PriceHistory` pertence à oferta, não ao plano.
+- Preço de web é a referência; App Store/Play entram com `sourceType` próprio.
+
+O seed inicial cobre apenas o Brasil. Para adicionar os demais países:
+
+```bash
+pnpm seed:offers --file=data/offers.csv --dry-run
+pnpm seed:offers --file=data/offers.csv
+pnpm validate:offers
+```
+
+O formato do CSV e as regras de coleta estão em
+[`data/README.md`](data/README.md).
 
 ## 🎨 Estilos
 

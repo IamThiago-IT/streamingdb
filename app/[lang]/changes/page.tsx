@@ -4,6 +4,8 @@ import { getDictionary, hasLocale } from "../dictionaries";
 import { getRecentChanges } from "@/lib/queries";
 import Header from "@/components/Header";
 import ChangeFilter from "@/components/ChangeFilter";
+import { getSelectedCountry } from "@/lib/country";
+import { getCountryName } from "@/lib/countries";
 
 function ChangeBadge({ type }: { type: string }) {
   const styles: Record<string, string> = {
@@ -33,10 +35,13 @@ function ChangeBadge({ type }: { type: string }) {
   );
 }
 
-function groupByDate(changes: Awaited<ReturnType<typeof getRecentChanges>>) {
+function groupByDate(
+  changes: Awaited<ReturnType<typeof getRecentChanges>>,
+  lang: string
+) {
   const groups: Record<string, typeof changes> = {};
   for (const c of changes) {
-    const key = new Date(c.createdAt).toLocaleDateString("pt-BR");
+    const key = new Date(c.createdAt).toLocaleDateString(lang);
     if (!groups[key]) groups[key] = [];
     groups[key].push(c);
   }
@@ -52,18 +57,23 @@ export default async function ChangesPage({
   if (!hasLocale(lang)) notFound();
 
   const dict = await getDictionary(lang);
+  const country = await getSelectedCountry();
+  const countryName = getCountryName(country, lang);
   const type = typeof sp.type === "string" ? sp.type : undefined;
-  const changes = await getRecentChanges(type, 50);
-  const grouped = groupByDate(changes);
+  const changes = await getRecentChanges(country, type, 50);
+  const grouped = groupByDate(changes, lang);
 
   return (
     <div className="min-h-screen bg-paper">
       <Header lang={lang} title={dict.home.title} />
 
       <main className="mx-auto max-w-4xl px-4 py-12">
-        <h1 className="mb-6 text-3xl text-ink">
+        <h1 className="mb-1 text-3xl text-ink">
           {dict.changes.title}
         </h1>
+        <p className="mb-6 font-mono text-[11px] uppercase tracking-[0.14em] text-ink-faint">
+          {dict.country.changesFor} {countryName}
+        </p>
 
         <ChangeFilter lang={lang} />
 
@@ -97,7 +107,7 @@ export default async function ChangesPage({
                     )}
                   </div>
                   <span className="mt-0.5 flex-shrink-0 font-mono text-[11px] tnum text-ink-faint">
-                    {new Date(c.createdAt).toLocaleTimeString("pt-BR", {
+                    {new Date(c.createdAt).toLocaleTimeString(lang, {
                       hour: "2-digit",
                       minute: "2-digit",
                     })}

@@ -4,6 +4,9 @@ import { getDictionary, hasLocale } from "../dictionaries";
 import { getPlatforms } from "@/lib/queries";
 import Header from "@/components/Header";
 import PlatformLogo from "@/components/PlatformLogo";
+import { getSelectedCountry } from "@/lib/country";
+import { formatMoney, monthlyAmount } from "@/lib/money";
+import { getCountryName } from "@/lib/countries";
 
 export default async function PlatformsPage({
   params,
@@ -11,18 +14,44 @@ export default async function PlatformsPage({
   const { lang } = await params;
   if (!hasLocale(lang)) notFound();
   const dict = await getDictionary(lang);
-  const platforms = await getPlatforms();
+  const country = await getSelectedCountry();
+  const countryName = getCountryName(country, lang);
+  const platforms = await getPlatforms(country);
 
-  const sorted = [...platforms].sort(
-    (a, b) => Math.min(...a.plans.map((p) => p.price)) - Math.min(...b.plans.map((p) => p.price))
-  );
+  const rows = platforms.map((platform) => {
+    const offers = platform.plans.flatMap((plan) => plan.offers);
+    const minOffer = [...offers].sort(
+      (a, b) =>
+        monthlyAmount(a.amount, a.billingMonths) -
+        monthlyAmount(b.amount, b.billingMonths)
+    )[0];
+
+    return {
+      platform,
+      planCount: platform.plans.filter((plan) => plan.offers.length > 0).length,
+      minOffer,
+    };
+  });
+
+  const sorted = rows.sort((a, b) => {
+    const aPrice = a.minOffer
+      ? monthlyAmount(a.minOffer.amount, a.minOffer.billingMonths)
+      : Number.POSITIVE_INFINITY;
+    const bPrice = b.minOffer
+      ? monthlyAmount(b.minOffer.amount, b.minOffer.billingMonths)
+      : Number.POSITIVE_INFINITY;
+    return aPrice - bPrice;
+  });
 
   return (
     <div className="min-h-screen bg-paper">
       <Header lang={lang} title={dict.home.title} />
 
       <main className="mx-auto max-w-4xl px-4 py-12">
-        <h1 className="mb-6 text-3xl text-ink">{dict.platforms.title}</h1>
+        <h1 className="mb-1 text-3xl text-ink">{dict.platforms.title}</h1>
+        <p className="mb-6 font-mono text-[11px] uppercase tracking-[0.14em] text-ink-faint">
+          {dict.country.pricesFor} {countryName}
+        </p>
 
         <div className="overflow-x-auto rounded-md border border-line bg-surface">
           <table className="w-full text-sm">
@@ -35,26 +64,49 @@ export default async function PlatformsPage({
               </tr>
             </thead>
             <tbody className="divide-y divide-line">
-              {sorted.map((p, i) => {
-                const minPrice = Math.min(...p.plans.map((pl) => pl.price));
+              {sorted.map(({ platform, planCount, minOffer }, i) => {
+                const availability = platform.platformCountries[0]?.status;
+                const isUnavailable = availability === "NOT_AVAILABLE";
+
                 return (
                   <tr
-                    key={p.id}
+                    key={platform.id}
                     className="transition-colors hover:bg-surface-2"
                   >
                     <td className="px-4 py-3 font-mono text-xs tnum text-ink-faint">{i + 1}</td>
                     <td className="px-4 py-3">
                       <Link
-                        href={`/${lang}/platforms/${p.slug}`}
+                        href={`/${lang}/platforms/${platform.slug}`}
                         className="flex items-center gap-3 font-medium text-ink"
                       >
-                        <PlatformLogo platform={p} size="md" />
-                        {p.name}
+                        <PlatformLogo platform={platform} size="md" />
+                        {platform.name}
                       </Link>
                     </td>
-                    <td className="px-4 py-3 font-mono text-xs tnum text-ink-muted">{p.plans.length}</td>
+                    <td className="px-4 py-3 font-mono text-xs tnum text-ink-muted">
+                      {isUnavailable ? (
+                        <span className="font-sans text-ink-faint">{dict.country.notAvailable}</span>
+                      ) : planCount > 0 ? (
+                        planCount
+                      ) : (
+                        "—"
+                      )}
+                    </td>
                     <td className="px-4 py-3 text-right font-mono text-[13px] tnum text-ink">
-                      R$ {minPrice.toFixed(2)}
+                      {minOffer ? (
+                        <>
+                          {formatMoney(
+                            monthlyAmount(minOffer.amount, minOffer.billingMonths),
+                            minOffer.currency,
+                            lang
+                          )}
+                          <span className="text-[10px] font-normal text-ink-faint">
+                            /{dict.pricing.month}
+                          </span>
+                        </>
+                      ) : (
+                        <span className="text-ink-faint">—</span>
+                      )}
                     </td>
                   </tr>
                 );

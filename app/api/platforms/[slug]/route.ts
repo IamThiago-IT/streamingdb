@@ -1,21 +1,32 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { defaultCountry, getCountry, isCountry } from "@/lib/countries";
 
 export async function GET(
-  _request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
   const { slug } = await params;
+  const { searchParams } = new URL(request.url);
+  const requested = searchParams.get("country");
+  const countryCode = isCountry(requested) ? requested : defaultCountry;
 
   const platform = await prisma.platform.findUnique({
     where: { slug },
     include: {
       plans: {
         include: {
-          priceHistory: { orderBy: { recordedAt: "desc" }, take: 10 },
+          offers: {
+            where: { countryCode },
+            include: {
+              history: { orderBy: { recordedAt: "desc" }, take: 20 },
+            },
+          },
         },
       },
+      platformCountries: { where: { countryCode } },
       availability: {
+        where: { available: true },
         include: { content: true },
         orderBy: { addedAt: "desc" },
         take: 50,
@@ -31,5 +42,9 @@ export async function GET(
     return NextResponse.json({ error: "Platform not found" }, { status: 404 });
   }
 
-  return NextResponse.json(platform);
+  return NextResponse.json({
+    country: countryCode,
+    currency: getCountry(countryCode).currency,
+    platform,
+  });
 }

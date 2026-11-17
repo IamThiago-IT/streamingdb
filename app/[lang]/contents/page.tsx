@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getDictionary, hasLocale } from "../dictionaries";
-import { getContents, getPlatforms } from "@/lib/queries";
+import { getContents, getPlatformList } from "@/lib/queries";
 import Header from "@/components/Header";
 import PlatformLogo from "@/components/PlatformLogo";
 
@@ -14,7 +14,7 @@ export default async function ContentsPage({
   if (!hasLocale(lang)) notFound();
 
   const dict = await getDictionary(lang);
-  const platforms = await getPlatforms();
+  const platforms = await getPlatformList();
 
   const query = typeof sp.q === "string" ? sp.q : "";
   const type = typeof sp.type === "string" ? sp.type : "";

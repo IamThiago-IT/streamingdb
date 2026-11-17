@@ -1,13 +1,34 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getDictionary, hasLocale } from "./dictionaries";
-import { getDashboardStats, getRecentChanges, getPlatforms, getPriceComparison } from "@/lib/queries";
+import {
+  getDashboardStats,
+  getRecentChanges,
+  getPlatforms,
+  getPriceComparison,
+} from "@/lib/queries";
 import Header from "@/components/Header";
 import PlatformLogo from "@/components/PlatformLogo";
+import { getSelectedCountry } from "@/lib/country";
+import {
+  currencySymbol,
+  formatMoney,
+  monthlyAmount,
+} from "@/lib/money";
+import {
+  getCountryCurrency,
+  getCountryName,
+} from "@/lib/countries";
 
-function ChangeMark({ type }: { type: string }) {
+function ChangeMark({
+  type,
+  priceGlyph,
+}: {
+  type: string;
+  priceGlyph: string;
+}) {
   const marks: Record<string, { glyph: string; className: string }> = {
-    PRICE_CHANGE: { glyph: "R$", className: "bg-warn-soft text-warn" },
+    PRICE_CHANGE: { glyph: priceGlyph, className: "bg-warn-soft text-warn" },
     CONTENT_ADDED: { glyph: "+", className: "bg-fall-soft text-fall" },
     CONTENT_REMOVED: { glyph: "−", className: "bg-rise-soft text-rise" },
     NEW_PLATFORM: { glyph: "N", className: "bg-accent-soft text-accent" },
@@ -39,10 +60,14 @@ export default async function Home({
   if (!hasLocale(lang)) notFound();
 
   const dict = await getDictionary(lang);
-  const stats = await getDashboardStats();
-  const changes = await getRecentChanges(undefined, 5);
-  const platforms = await getPlatforms();
-  const comparison = await getPriceComparison();
+  const country = await getSelectedCountry();
+  const countryName = getCountryName(country, lang);
+  const priceGlyph = currencySymbol(getCountryCurrency(country), lang);
+
+  const stats = await getDashboardStats(country);
+  const changes = await getRecentChanges(country, undefined, 5);
+  const platforms = await getPlatforms(country);
+  const comparison = await getPriceComparison(country);
 
   const ledger = [
     { value: String(stats.platformCount), label: dict.home.stats.platforms, tone: "text-ink" },
@@ -56,7 +81,9 @@ export default async function Home({
 
       <main className="mx-auto max-w-6xl px-4 py-12">
         <section className="mb-10">
-          <Kicker>Preços · Catálogo · Mudanças</Kicker>
+          <Kicker>
+            {dict.country.pricesFor} {countryName} · {priceGlyph}
+          </Kicker>
           <h1 className="mt-3 max-w-3xl text-4xl leading-[1.08] text-ink md:text-5xl">
             {dict.home.title}
           </h1>
@@ -77,13 +104,23 @@ export default async function Home({
                 </p>
               </div>
             ))}
-            {stats.cheapestPlan && (
+            {stats.cheapestOffer && (
               <div className="bg-paper px-5 py-5">
                 <p className="whitespace-nowrap font-mono text-2xl font-medium tnum text-fall md:text-3xl">
-                  R$ {stats.cheapestPlan.price.toFixed(2)}
+                  {formatMoney(
+                    monthlyAmount(
+                      stats.cheapestOffer.amount,
+                      stats.cheapestOffer.billingMonths
+                    ),
+                    stats.cheapestOffer.currency,
+                    lang
+                  )}
+                  <span className="text-xs font-normal text-ink-faint">
+                    /{dict.pricing.month}
+                  </span>
                 </p>
                 <p className="mt-1 text-xs uppercase tracking-wider text-ink-faint">
-                  {dict.home.cheapest} · {stats.cheapestPlan.platform.name}
+                  {dict.home.cheapest} · {stats.cheapestOffer.plan.platform.name}
                 </p>
               </div>
             )}
@@ -95,7 +132,7 @@ export default async function Home({
             <div className="mb-4 flex items-end justify-between">
               <h2 className="text-2xl text-ink">Comparação de preços</h2>
               <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-ink-faint">
-                mensal
+                {dict.pricing.monthly}
               </span>
             </div>
             <div className="grid gap-4 md:grid-cols-2">
@@ -104,19 +141,26 @@ export default async function Home({
                   Planos mais baratos
                 </h3>
                 <div className="space-y-1">
-                  {comparison.cheapest.map((plan) => (
+                  {comparison.cheapest.map((offer) => (
                     <Link
-                      key={plan.id}
-                      href={`/${lang}/platforms/${plan.platform.slug}`}
+                      key={offer.id}
+                      href={`/${lang}/platforms/${offer.plan.platform.slug}`}
                       className="-mx-2 flex min-w-0 items-center justify-between rounded-sm px-2 py-1.5 text-sm transition-colors hover:bg-surface-2"
                     >
                       <div className="flex min-w-0 items-center gap-2">
-                        <PlatformLogo platform={plan.platform} size="sm" />
-                        <span className="truncate text-ink">{plan.platform.name}</span>
-                        <span className="hidden truncate text-ink-faint sm:inline">· {plan.name}</span>
+                        <PlatformLogo platform={offer.plan.platform} size="sm" />
+                        <span className="truncate text-ink">{offer.plan.platform.name}</span>
+                        <span className="hidden truncate text-ink-faint sm:inline">· {offer.displayName ?? offer.plan.name}</span>
                       </div>
                       <span className="ml-2 flex-shrink-0 font-mono text-[13px] tnum text-ink">
-                        R$ {plan.price.toFixed(2)}
+                        {formatMoney(
+                          monthlyAmount(offer.amount, offer.billingMonths),
+                          offer.currency,
+                          lang
+                        )}
+                        <span className="text-[10px] font-normal text-ink-faint">
+                          /{dict.pricing.month}
+                        </span>
                       </span>
                     </Link>
                   ))}
@@ -128,19 +172,26 @@ export default async function Home({
                   Sem anúncios (mais baratos)
                 </h3>
                 <div className="space-y-1">
-                  {comparison.cheapestNoAds.map((plan) => (
+                  {comparison.cheapestNoAds.map((offer) => (
                     <Link
-                      key={plan.id}
-                      href={`/${lang}/platforms/${plan.platform.slug}`}
+                      key={offer.id}
+                      href={`/${lang}/platforms/${offer.plan.platform.slug}`}
                       className="-mx-2 flex min-w-0 items-center justify-between rounded-sm px-2 py-1.5 text-sm transition-colors hover:bg-surface-2"
                     >
                       <div className="flex min-w-0 items-center gap-2">
-                        <PlatformLogo platform={plan.platform} size="sm" />
-                        <span className="truncate text-ink">{plan.platform.name}</span>
-                        <span className="hidden truncate text-ink-faint sm:inline">· {plan.name}</span>
+                        <PlatformLogo platform={offer.plan.platform} size="sm" />
+                        <span className="truncate text-ink">{offer.plan.platform.name}</span>
+                        <span className="hidden truncate text-ink-faint sm:inline">· {offer.displayName ?? offer.plan.name}</span>
                       </div>
                       <span className="ml-2 flex-shrink-0 font-mono text-[13px] tnum text-ink">
-                        R$ {plan.price.toFixed(2)}
+                        {formatMoney(
+                          monthlyAmount(offer.amount, offer.billingMonths),
+                          offer.currency,
+                          lang
+                        )}
+                        <span className="text-[10px] font-normal text-ink-faint">
+                          /{dict.pricing.month}
+                        </span>
                       </span>
                     </Link>
                   ))}
@@ -162,7 +213,13 @@ export default async function Home({
           </div>
           <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
             {platforms.map((p) => {
-              const minPrice = p.plans.length > 0 ? Math.min(...p.plans.map((pl) => pl.price)) : null;
+              const offers = p.plans.flatMap((plan) => plan.offers);
+              const minOffer = [...offers].sort(
+                (a, b) =>
+                  monthlyAmount(a.amount, a.billingMonths) -
+                  monthlyAmount(b.amount, b.billingMonths)
+              )[0];
+
               return (
                 <Link
                   key={p.id}
@@ -176,9 +233,13 @@ export default async function Home({
                         {p.name}
                       </span>
                     </div>
-                    {minPrice !== null && (
+                    {minOffer && (
                       <span className="hidden flex-shrink-0 font-mono text-[11px] tnum text-ink-faint sm:inline">
-                        R$ {minPrice.toFixed(2)}
+                        {formatMoney(
+                          monthlyAmount(minOffer.amount, minOffer.billingMonths),
+                          minOffer.currency,
+                          lang
+                        )}
                       </span>
                     )}
                   </div>
@@ -213,13 +274,13 @@ export default async function Home({
                 className="flex min-w-0 items-start gap-3 rounded-md border border-line bg-surface px-4 py-3 text-sm"
               >
                 <span className="mt-0.5 flex-shrink-0">
-                  <ChangeMark type={c.type} />
+                  <ChangeMark type={c.type} priceGlyph={priceGlyph} />
                 </span>
                 <span className="min-w-0 flex-1 text-sm leading-snug text-ink-muted">
                   {c.description}
                 </span>
                 <span className="mt-0.5 flex-shrink-0 font-mono text-[11px] tnum text-ink-faint">
-                  {new Date(c.createdAt).toLocaleDateString("pt-BR")}
+                  {new Date(c.createdAt).toLocaleDateString(lang)}
                 </span>
               </div>
             ))}

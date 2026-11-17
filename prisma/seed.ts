@@ -1,6 +1,7 @@
 import "dotenv/config";
 import { PrismaClient } from "@/app/generated/prisma/client";
 import { createPrismaAdapter } from "@/lib/db-adapter";
+import { countries } from "@/lib/countries";
 
 const prisma = new PrismaClient({ adapter: createPrismaAdapter() });
 
@@ -21,53 +22,66 @@ const platformsData = [
   { name: "MUBI", slug: "mubi", color: "#1C1C1C", logo: bf("mubi.com"), website: "https://mubi.com" },
 ];
 
-const plansData: Record<string, { name: string; price: number; quality?: string; ads: boolean; billingCycle?: string }[]> = {
+type BillingCycle = "MONTHLY" | "ANNUAL";
+
+type PlanSeed = {
+  name: string;
+  tierKey: string;
+  price: number;
+  quality?: string;
+  ads: boolean;
+  billingCycle?: BillingCycle;
+};
+
+const plansData: Record<string, PlanSeed[]> = {
   "looke": [
-    { name: "Plano Mensal", price: 16.90, quality: "HD", ads: false },
+    { name: "Plano Mensal", tierKey: "mensal", price: 16.90, quality: "HD", ads: false },
   ],
   "prime-video": [
-    { name: "Plano Mensal", price: 19.90, quality: "4K HDR", ads: false },
+    { name: "Plano Mensal", tierKey: "mensal", price: 19.90, quality: "4K HDR", ads: false },
   ],
   "crunchyroll": [
-    { name: "Plano FAN", price: 19.90, quality: "HD", ads: false },
-    { name: "Plano Mega Fan", price: 29.90, quality: "HD", ads: false },
-    { name: "Plano Ultimate Fan", price: 44.90, quality: "4K HDR", ads: false },
+    { name: "Plano FAN", tierKey: "fan", price: 19.90, quality: "HD", ads: false },
+    { name: "Plano Mega Fan", tierKey: "mega-fan", price: 29.90, quality: "HD", ads: false },
+    { name: "Plano Ultimate Fan", tierKey: "ultimate-fan", price: 44.90, quality: "4K HDR", ads: false },
   ],
   "netflix": [
-    { name: "Padrão com Anúncios", price: 20.90, quality: "HD", ads: true },
-    { name: "Padrão", price: 44.90, quality: "HD", ads: false },
-    { name: "Premium", price: 59.90, quality: "4K HDR", ads: false },
+    { name: "Padrão com Anúncios", tierKey: "com-anuncios", price: 20.90, quality: "HD", ads: true },
+    { name: "Padrão", tierKey: "padrao", price: 44.90, quality: "HD", ads: false },
+    { name: "Premium", tierKey: "premium", price: 59.90, quality: "4K HDR", ads: false },
   ],
   "globoplay": [
-    { name: "Padrão com Anúncios", price: 22.90, quality: "HD", ads: true },
-    { name: "Globoplay + Canais", price: 34.90, quality: "HD", ads: false },
-    { name: "Globoplay + Canais + Telecine", price: 57.90, quality: "HD", ads: false },
+    { name: "Padrão com Anúncios", tierKey: "com-anuncios", price: 22.90, quality: "HD", ads: true },
+    { name: "Globoplay + Canais", tierKey: "canais", price: 34.90, quality: "HD", ads: false },
+    { name: "Globoplay + Canais + Telecine", tierKey: "canais-telecine", price: 57.90, quality: "HD", ads: false },
   ],
   "youtube-premium": [
-    { name: "Plano Individual", price: 26.90, quality: "4K", ads: false },
-    { name: "Plano Familiar", price: 44.90, quality: "4K", ads: false },
+    { name: "Plano Individual", tierKey: "individual", price: 26.90, quality: "4K", ads: false },
+    { name: "Plano Familiar", tierKey: "familiar", price: 44.90, quality: "4K", ads: false },
   ],
   "disney-plus": [
-    { name: "Padrão com Anúncios", price: 27.99, quality: "HD", ads: true },
-    { name: "Padrão", price: 43.99, quality: "HD", ads: false },
-    { name: "Premium", price: 62.99, quality: "4K HDR", ads: false },
+    { name: "Padrão com Anúncios", tierKey: "com-anuncios", price: 27.99, quality: "HD", ads: true },
+    { name: "Padrão", tierKey: "padrao", price: 43.99, quality: "HD", ads: false },
+    { name: "Premium", tierKey: "premium", price: 62.99, quality: "4K HDR", ads: false },
   ],
   "hbo-max": [
-    { name: "Básico com Anúncios", price: 29.90, quality: "HD", ads: true },
-    { name: "Standard", price: 39.90, quality: "HD", ads: false },
-    { name: "Platimum", price: 49.90, quality: "4K HDR", ads: false },
+    { name: "Básico com Anúncios", tierKey: "basico-com-anuncios", price: 29.90, quality: "HD", ads: true },
+    { name: "Standard", tierKey: "standard", price: 39.90, quality: "HD", ads: false },
+    { name: "Platimum", tierKey: "platinum", price: 49.90, quality: "4K HDR", ads: false },
   ],
   "apple-tv-plus": [
-    { name: "Plano Mensal", price: 29.90, quality: "4K HDR", ads: false },
+    { name: "Plano Mensal", tierKey: "mensal", price: 29.90, quality: "4K HDR", ads: false },
   ],
   "paramount-plus": [
-    { name: "Plano Padrão", price: 34.90, quality: "HD", ads: false },
+    { name: "Plano Padrão", tierKey: "padrao", price: 34.90, quality: "HD", ads: false },
   ],
   "mubi": [
-    { name: "Plano Mensal", price: 34.90, quality: "HD", ads: false },
-    { name: "Plano Anual", price: 289.90, quality: "HD", ads: false, billingCycle: "anual" },
+    { name: "Plano Mensal", tierKey: "mensal", price: 34.90, quality: "HD", ads: false },
+    { name: "Plano Anual", tierKey: "anual", price: 289.90, quality: "HD", ads: false, billingCycle: "ANNUAL" },
   ],
 };
+
+const brOnlyPlatforms = new Set(["looke", "globoplay"]);
 
 const sampleContent = [
   { title: "Stranger Things", originalTitle: "Stranger Things", type: "SERIES", year: 2016, genre: "Ficção Científica, Terror", rating: 8.7 },
@@ -87,7 +101,7 @@ const sampleContent = [
   { title: "Arcane", originalTitle: "Arcane", type: "SERIES", year: 2021, genre: "Animação, Ação", rating: 9.0 },
 ];
 
-async function slugify(text: string): Promise<string> {
+function slugify(text: string): string {
   return text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 }
 
@@ -102,46 +116,185 @@ function randomVariation(base: number, pct: number): number {
   return Math.round(base * (1 + (Math.random() - 0.5) * pct) * 100) / 100;
 }
 
+async function seedPlatformCountries(platformId: string, slug: string) {
+  for (const country of countries) {
+    const status =
+      country.code === "BR"
+        ? "OPERATES"
+        : brOnlyPlatforms.has(slug)
+          ? "NOT_AVAILABLE"
+          : "UNKNOWN";
+
+    await prisma.platformCountry.upsert({
+      where: {
+        platformId_countryCode: {
+          platformId,
+          countryCode: country.code,
+        },
+      },
+      update: { status },
+      create: { platformId, countryCode: country.code, status },
+    });
+  }
+}
+
+async function seedPlan(platformId: string, platformWebsite: string | null, planData: PlanSeed) {
+  const byTier = await prisma.plan.findFirst({
+    where: { platformId, tierKey: planData.tierKey },
+  });
+
+  // Bancos migrados do modelo antigo têm tierKey derivado do nome. Adota o
+  // plano existente em vez de criar um tier duplicado.
+  let plan =
+    byTier ??
+    (await prisma.plan.findFirst({
+      where: { platformId, name: planData.name },
+    }));
+
+  if (plan) {
+    plan = await prisma.plan.update({
+      where: { id: plan.id },
+      data: {
+        name: planData.name,
+        ...(byTier ? {} : { tierKey: planData.tierKey }),
+      },
+    });
+  } else {
+    plan = await prisma.plan.create({
+      data: {
+        platformId,
+        tierKey: planData.tierKey,
+        name: planData.name,
+      },
+    });
+  }
+
+  const billingCycle = planData.billingCycle ?? "MONTHLY";
+  const billingMonths = billingCycle === "ANNUAL" ? 12 : 1;
+
+  const offer = await prisma.planOffer.upsert({
+    where: {
+      planId_countryCode_billingCycle: {
+        planId: plan.id,
+        countryCode: "BR",
+        billingCycle,
+      },
+    },
+    update: {
+      currency: "BRL",
+      amount: planData.price,
+      billingMonths,
+      taxIncluded: true,
+      displayName: planData.name,
+      quality: planData.quality ?? null,
+      ads: planData.ads,
+      sourceUrl: platformWebsite,
+      sourceType: "SEED",
+      status: "ACTIVE",
+      lastCheckedAt: new Date(),
+      lastSuccessAt: new Date(),
+    },
+    create: {
+      planId: plan.id,
+      countryCode: "BR",
+      currency: "BRL",
+      amount: planData.price,
+      billingCycle,
+      billingMonths,
+      taxIncluded: true,
+      displayName: planData.name,
+      quality: planData.quality ?? null,
+      ads: planData.ads,
+      sourceUrl: platformWebsite,
+      sourceType: "SEED",
+      status: "ACTIVE",
+      lastCheckedAt: new Date(),
+      lastSuccessAt: new Date(),
+    },
+  });
+
+  const historyCount = await prisma.priceHistory.count({
+    where: { offerId: offer.id },
+  });
+
+  if (historyCount === 0) {
+    for (let i = 3; i >= 0; i--) {
+      const oldPrice =
+        i === 0 ? planData.price : randomVariation(planData.price, 0.15);
+      await prisma.priceHistory.create({
+        data: {
+          offerId: offer.id,
+          amount: oldPrice,
+          currency: "BRL",
+          taxIncluded: true,
+          recordedAt: monthsAgo(i),
+        },
+      });
+    }
+  }
+}
+
 async function main() {
   for (const p of platformsData) {
-    const platform = await prisma.platform.create({ data: p });
+    const platform = await prisma.platform.upsert({
+      where: { slug: p.slug },
+      update: {
+        name: p.name,
+        color: p.color,
+        logo: p.logo,
+        website: p.website,
+      },
+      create: p,
+    });
 
-    const planEntries = plansData[p.slug];
-    if (planEntries) {
-      for (const planData of planEntries) {
-        const plan = await prisma.plan.create({
-          data: {
-            platformId: platform.id,
-            name: planData.name,
-            price: planData.price,
-            quality: planData.quality,
-            ads: planData.ads,
-            billingCycle: planData.billingCycle ?? "mensal",
-          },
-        });
+    await seedPlatformCountries(platform.id, p.slug);
 
-        for (let i = 3; i >= 0; i--) {
-          const oldPrice = i === 0 ? planData.price : randomVariation(planData.price, 0.15);
-          await prisma.priceHistory.create({
-            data: {
-              planId: plan.id,
-              price: oldPrice,
-              recordedAt: monthsAgo(i),
-            },
-          });
-        }
-      }
+    const planEntries = plansData[p.slug] ?? [];
+    for (const planData of planEntries) {
+      await seedPlan(platform.id, platform.website, planData);
     }
   }
 
-  const allPlatforms = await prisma.platform.findMany();
+  const looke = await prisma.platform.findUnique({ where: { slug: "looke" } });
+  if (looke) {
+    await prisma.priceSource.upsert({
+      where: {
+        platformId_countryCode_url: {
+          platformId: looke.id,
+          countryCode: "BR",
+          url: "https://www.looke.com.br/planos",
+        },
+      },
+      update: { isActive: true },
+      create: {
+        platformId: looke.id,
+        countryCode: "BR",
+        url: "https://www.looke.com.br/planos",
+        parserKey: "looke",
+        renderMode: "HTTP",
+      },
+    });
+  }
 
-  for (const c of sampleContent) {
-    const content = await prisma.content.create({
-      data: {
+  const allPlatforms = await prisma.platform.findMany({
+    orderBy: { slug: "asc" },
+  });
+
+  for (const [contentIndex, c] of sampleContent.entries()) {
+    const content = await prisma.content.upsert({
+      where: { slug: slugify(c.title) },
+      update: {
         title: c.title,
         originalTitle: c.originalTitle,
-        slug: await slugify(c.title),
+        type: c.type,
+        year: c.year,
+        genre: c.genre,
+        rating: c.rating,
+      },
+      create: {
+        title: c.title,
+        originalTitle: c.originalTitle,
+        slug: slugify(c.title),
         type: c.type,
         year: c.year,
         genre: c.genre,
@@ -149,35 +302,69 @@ async function main() {
       },
     });
 
-    const shuffled = allPlatforms.sort(() => Math.random() - 0.5).slice(0, 3);
-    for (const platform of shuffled) {
-      await prisma.contentAvailability.create({
-        data: { contentId: content.id, platformId: platform.id },
+    // Distribuição determinística: reexecutar o seed não cria novas
+    // disponibilidades nem novos logs.
+    const assigned = [0, 1, 2].map(
+      (offset) =>
+        allPlatforms[(contentIndex * 3 + offset) % allPlatforms.length]
+    );
+
+    for (const platform of assigned) {
+      await prisma.contentAvailability.upsert({
+        where: {
+          contentId_platformId: {
+            contentId: content.id,
+            platformId: platform.id,
+          },
+        },
+        update: { available: true, removedAt: null },
+        create: { contentId: content.id, platformId: platform.id },
       });
     }
   }
 
   for (const platform of allPlatforms) {
-    await prisma.changeLog.create({
-      data: {
-        type: "NEW_PLATFORM",
-        description: `${platform.name} foi adicionada ao catálogo`,
-        platformId: platform.id,
-      },
+    const existing = await prisma.changeLog.findFirst({
+      where: { type: "NEW_PLATFORM", platformId: platform.id },
     });
+
+    if (!existing) {
+      await prisma.changeLog.create({
+        data: {
+          type: "NEW_PLATFORM",
+          description: `${platform.name} foi adicionada ao catálogo`,
+          platformId: platform.id,
+        },
+      });
+    }
   }
 
-  const contents = await prisma.content.findMany({ take: 5 });
-  for (const content of contents) {
-    const platform = allPlatforms[Math.floor(Math.random() * allPlatforms.length)];
-    await prisma.changeLog.create({
-      data: {
+  const contents = await prisma.content.findMany({
+    take: 5,
+    orderBy: { slug: "asc" },
+  });
+  for (const [index, content] of contents.entries()) {
+    // Mesma distribuição determinística das disponibilidades: reexecutar o
+    // seed não cria novos logs de conteúdo.
+    const platform = allPlatforms[(index * 3) % allPlatforms.length];
+    const existing = await prisma.changeLog.findFirst({
+      where: {
         type: "CONTENT_ADDED",
-        description: `${content.title} foi adicionado à ${platform.name}`,
         platformId: platform.id,
         contentId: content.id,
       },
     });
+
+    if (!existing) {
+      await prisma.changeLog.create({
+        data: {
+          type: "CONTENT_ADDED",
+          description: `${content.title} foi adicionado à ${platform.name}`,
+          platformId: platform.id,
+          contentId: content.id,
+        },
+      });
+    }
   }
 
   console.log("Seed completed successfully!");

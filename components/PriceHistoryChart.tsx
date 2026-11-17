@@ -9,6 +9,7 @@ import {
   ResponsiveContainer,
   CartesianGrid,
 } from "recharts";
+import { formatMoney } from "@/lib/money";
 
 type PricePoint = {
   recordedAt: string;
@@ -19,27 +20,35 @@ type PricePoint = {
 export default function PriceHistoryChart({
   data,
   planColors,
+  currency,
+  locale,
 }: {
   data: PricePoint[];
   planColors?: Record<string, string>;
+  currency: string;
+  locale: string;
 }) {
   if (data.length === 0) return null;
 
-  type ChartEntry = { date: string } & Record<string, number | string>;
-  const grouped = data.reduce<Record<string, ChartEntry>>(
-    (acc, point) => {
-      const date = new Date(point.recordedAt).toLocaleDateString("pt-BR");
-      if (!acc[date]) {
-        acc[date] = { date };
-      }
-      acc[date][point.planName] = point.price;
-      return acc;
-    },
-    {}
-  );
+  type ChartEntry = { key: string; date: string } & Record<
+    string,
+    number | string
+  >;
+
+  const grouped = data.reduce<Record<string, ChartEntry>>((acc, point) => {
+    const key = point.recordedAt.slice(0, 10);
+    if (!acc[key]) {
+      acc[key] = {
+        key,
+        date: new Date(point.recordedAt).toLocaleDateString(locale),
+      };
+    }
+    acc[key][point.planName] = point.price;
+    return acc;
+  }, {});
 
   const chartData = Object.values(grouped).sort((a, b) =>
-    a.date.localeCompare(b.date)
+    a.key.localeCompare(b.key)
   );
 
   const planNames = [...new Set(data.map((d) => d.planName))];
@@ -65,12 +74,14 @@ export default function PriceHistoryChart({
             tickMargin={8}
           />
           <YAxis
-            width={52}
+            width={72}
             tick={{ fontSize: 11, fill: "var(--ink-muted)" }}
             axisLine={{ stroke: "var(--line)" }}
             tickLine={{ stroke: "var(--line)" }}
             tickMargin={6}
-            tickFormatter={(v: number) => `R$${v}`}
+            tickFormatter={(v: number) =>
+              formatMoney(v, currency, locale, { maximumFractionDigits: 0 })
+            }
           />
           <Tooltip
             cursor={{ stroke: "var(--line-strong)" }}
@@ -83,7 +94,10 @@ export default function PriceHistoryChart({
             }}
             labelStyle={{ color: "var(--ink-muted)" }}
             itemStyle={{ color: "var(--ink)" }}
-            formatter={(value, name) => [`R$ ${Number(value).toFixed(2)}`, name]}
+            formatter={(value, name) => [
+              formatMoney(Number(value), currency, locale),
+              name,
+            ]}
           />
           {planNames.map((name, i) => (
             <Line

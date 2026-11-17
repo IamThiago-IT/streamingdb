@@ -1,26 +1,45 @@
 import { prisma } from "./db";
 import { containsInsensitive } from "./db-filters";
+import { monthlyAmount } from "./money";
 
-export async function getPlatforms() {
+const activeOfferStatuses = ["ACTIVE", "STALE"];
+
+export async function getPlatforms(countryCode: string) {
   return prisma.platform.findMany({
     include: {
-      plans: { orderBy: { price: "asc" } },
+      plans: {
+        include: {
+          offers: { where: { countryCode } },
+        },
+      },
+      platformCountries: { where: { countryCode } },
       _count: { select: { availability: { where: { available: true } } } },
     },
     orderBy: { name: "asc" },
   });
 }
 
-export async function getPlatformBySlug(slug: string) {
+/** Lista simples para filtros de catálogo (sem preço/país). */
+export async function getPlatformList() {
+  return prisma.platform.findMany({ orderBy: { name: "asc" } });
+}
+
+export async function getPlatformBySlug(slug: string, countryCode: string) {
   return prisma.platform.findUnique({
     where: { slug },
     include: {
       plans: {
         include: {
-          priceHistory: { orderBy: { recordedAt: "desc" }, take: 20 },
+          offers: {
+            where: { countryCode },
+            include: {
+              history: { orderBy: { recordedAt: "desc" }, take: 20 },
+            },
+          },
         },
-        orderBy: { price: "asc" },
+        orderBy: { name: "asc" },
       },
+      platformCountries: { where: { countryCode } },
       availability: {
         where: { available: true },
         include: { content: true },
@@ -36,17 +55,27 @@ export async function getPlatformBySlug(slug: string) {
   });
 }
 
-export type PlatformWithPriceHistory = Awaited<ReturnType<typeof getPlatformWithAllPriceHistory>>;
+export type PlatformWithPriceHistory = Awaited<
+  ReturnType<typeof getPlatformWithAllPriceHistory>
+>;
 
-export async function getPlatformWithAllPriceHistory(slug: string) {
+export async function getPlatformWithAllPriceHistory(
+  slug: string,
+  countryCode: string
+) {
   return prisma.platform.findUnique({
     where: { slug },
     include: {
       plans: {
         include: {
-          priceHistory: { orderBy: { recordedAt: "asc" } },
+          offers: {
+            where: { countryCode },
+            include: {
+              history: { orderBy: { recordedAt: "asc" } },
+            },
+          },
         },
-        orderBy: { price: "asc" },
+        orderBy: { name: "asc" },
       },
     },
   });
@@ -112,8 +141,14 @@ export async function getContentBySlug(slug: string) {
   });
 }
 
-export async function getRecentChanges(type?: string, limit = 50) {
-  const where: Record<string, unknown> = {};
+export async function getRecentChanges(
+  countryCode: string,
+  type?: string,
+  limit = 50
+) {
+  const where: Record<string, unknown> = {
+    OR: [{ countryCode }, { countryCode: null }],
+  };
   if (type) where.type = type;
 
   return prisma.changeLog.findMany({
@@ -124,22 +159,45 @@ export async function getRecentChanges(type?: string, limit = 50) {
   });
 }
 
-export async function getDashboardStats() {
-  const [platformCount, contentCount, changeCount, cheapestPlan] = await Promise.all([
+export async function getDashboardStats(countryCode: string) {
+  const [platformCount, contentCount, changeCount, offers] = await Promise.all([
     prisma.platform.count(),
     prisma.content.count(),
-    prisma.changeLog.count(),
-    prisma.plan.findFirst({ orderBy: { price: "asc" }, include: { platform: true } }),
+    prisma.changeLog.count({
+      where: { OR: [{ countryCode }, { countryCode: null }] },
+    }),
+    prisma.planOffer.findMany({
+      where: {
+        countryCode,
+        status: { in: activeOfferStatuses },
+      },
+      include: { plan: { include: { platform: true } } },
+    }),
   ]);
 
-  return { platformCount, contentCount, changeCount, cheapestPlan };
+  const cheapestOffer =
+    [...offers].sort(
+      (a, b) =>
+        monthlyAmount(a.amount, a.billingMonths) -
+        monthlyAmount(b.amount, b.billingMonths)
+    )[0] ?? null;
+
+  return { platformCount, contentCount, changeCount, cheapestOffer };
 }
 
-export async function getPlanPricesAtDates(platformId: string) {
+export async function getPlanPricesAtDates(
+  platformId: string,
+  countryCode: string
+) {
   const plans = await prisma.plan.findMany({
     where: { platformId },
     include: {
-      priceHistory: { orderBy: { recordedAt: "asc" } },
+      offers: {
+        where: { countryCode },
+        include: {
+          history: { orderBy: { recordedAt: "asc" } },
+        },
+      },
     },
   });
 
@@ -149,50 +207,71 @@ export async function getPlanPricesAtDates(platformId: string) {
     { key: "2y", months: 24 },
   ];
 
-  return plans.map((plan) => {
-    const now = new Date();
-    const periodPrices: Record<string, { price: number; date: Date } | null> = {};
+  return plans.flatMap((plan) =>
+    plan.offers.map((offer) => {
+      const now = new Date();
+      const periodPrices: Record<
+        string,
+        { amount: number; date: Date } | null
+      > = {};
 
-    for (const period of periods) {
-      const target = new Date(now);
-      target.setMonth(target.getMonth() - period.months);
+      for (const period of periods) {
+        const target = new Date(now);
+        target.setMonth(target.getMonth() - period.months);
 
-      let closest: { price: number; date: Date } | null = null;
-      for (const h of plan.priceHistory) {
-        if (h.recordedAt <= target) {
-          closest = { price: h.price, date: h.recordedAt };
-        } else {
-          break;
+        let closest: { amount: number; date: Date } | null = null;
+        for (const h of offer.history) {
+          if (h.recordedAt <= target) {
+            closest = { amount: Number(h.amount), date: h.recordedAt };
+          } else {
+            break;
+          }
         }
+        periodPrices[period.key] = closest;
       }
-      periodPrices[period.key] = closest;
-    }
 
-    const lowestRecord = plan.priceHistory.length > 0
-      ? plan.priceHistory.reduce((min, h) => (h.price < min.price ? h : min))
-      : null;
+      const lowestRecord =
+        offer.history.length > 0
+          ? offer.history.reduce((min, h) =>
+              Number(h.amount) < Number(min.amount) ? h : min
+            )
+          : null;
 
-    return {
-      planId: plan.id,
-      planName: plan.name,
-      currentPrice: plan.price,
-      periodPrices,
-      lowestPrice: lowestRecord ? { price: lowestRecord.price, date: lowestRecord.recordedAt } : null,
-    };
-  });
+      return {
+        offerId: offer.id,
+        planId: plan.id,
+        planName: offer.displayName ?? plan.name,
+        currency: offer.currency,
+        currentAmount: Number(offer.amount),
+        periodPrices,
+        lowestPrice: lowestRecord
+          ? { amount: Number(lowestRecord.amount), date: lowestRecord.recordedAt }
+          : null,
+      };
+    })
+  );
 }
 
-export async function getPriceComparison() {
-  const plans = await prisma.plan.findMany({
-    include: { platform: true },
-    orderBy: { price: "asc" },
+export async function getPriceComparison(countryCode: string) {
+  const offers = await prisma.planOffer.findMany({
+    where: {
+      countryCode,
+      status: { in: activeOfferStatuses },
+    },
+    include: { plan: { include: { platform: true } } },
   });
 
-  const adsPlans = plans.filter((p) => p.ads);
-  const noAdsPlans = plans.filter((p) => !p.ads);
+  const sorted = [...offers].sort(
+    (a, b) =>
+      monthlyAmount(a.amount, a.billingMonths) -
+      monthlyAmount(b.amount, b.billingMonths)
+  );
+
+  const adsPlans = sorted.filter((offer) => offer.ads);
+  const noAdsPlans = sorted.filter((offer) => !offer.ads);
 
   return {
-    cheapest: plans.slice(0, 5),
+    cheapest: sorted.slice(0, 5),
     cheapestNoAds: noAdsPlans.slice(0, 5),
     cheapestWithAds: adsPlans.slice(0, 5),
   };

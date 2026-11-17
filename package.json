@@ -14,6 +14,8 @@
     "db:seed": "npx tsx prisma/seed.ts",
     "db:studio": "npx prisma studio",
     "db:reset": "npx prisma migrate reset --force",
+    "seed:offers": "npx tsx scripts/import-offers.ts",
+    "validate:offers": "npx tsx scripts/validate-offers.ts",
     "scrape": "npx tsx scripts/scraper.ts",
     "monitor": "npx tsx scripts/monitor.ts",
     "seed:content": "npx tsx scripts/seed-content.ts"

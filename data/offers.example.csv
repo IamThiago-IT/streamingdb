@@ -1,0 +1,4 @@
+platform_slug,country_code,tier_key,display_name,currency,amount,billing_cycle,billing_months,tax_included,quality,ads,source_url,source_type,verified_at
+looke,BR,mensal,Plano Mensal,BRL,16.90,MONTHLY,1,true,HD,false,https://www.looke.com.br/planos,OFFICIAL_WEB,2026-11-17
+netflix,BR,padrao,Padrão,BRL,44.90,MONTHLY,1,true,HD,false,https://www.netflix.com/br/,OFFICIAL_WEB,2026-11-17
+mubi,BR,anual,Plano Anual,BRL,289.90,ANNUAL,12,true,HD,false,https://mubi.com/pt/br,OFFICIAL_WEB,2026-11-17

@@ -4,13 +4,21 @@ import Link from "next/link";
 import { useTheme } from "@/app/[lang]/ThemeProvider";
 import { authClient } from "@/lib/auth-client";
 import SignOutButton from "@/components/auth/SignOutButton";
+import CountrySelector from "@/components/CountrySelector";
 
-export default function HeaderActions({ lang }: { lang: string }) {
+export default function HeaderActions({
+  lang,
+  country,
+}: {
+  lang: string;
+  country: string;
+}) {
   const { theme, toggle } = useTheme();
   const { data: session } = authClient.useSession();
 
   return (
     <div className="flex items-center gap-2">
+      <CountrySelector current={country} lang={lang} />
       {session ? (
         <>
           <Link

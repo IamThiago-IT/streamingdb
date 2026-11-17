@@ -1,11 +1,21 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getDictionary, hasLocale } from "../../dictionaries";
-import { getPlatformBySlug, getPlatformWithAllPriceHistory, getPlanPricesAtDates } from "@/lib/queries";
+import {
+  getPlatformBySlug,
+  getPlatformWithAllPriceHistory,
+  getPlanPricesAtDates,
+} from "@/lib/queries";
 import PriceHistoryChart from "@/components/PriceHistoryChart";
 import PriceBadge from "@/components/PriceBadge";
 import Header from "@/components/Header";
 import PlatformLogo from "@/components/PlatformLogo";
+import { getSelectedCountry } from "@/lib/country";
+import { formatMoney } from "@/lib/money";
+import {
+  getCountryCurrency,
+  getCountryName,
+} from "@/lib/countries";
 
 const chartColors = [
   "var(--chart-1)",
@@ -16,6 +26,12 @@ const chartColors = [
   "var(--chart-6)",
 ];
 
+const periods = [
+  { key: "6m", label: "Há 6 meses" },
+  { key: "1y", label: "Há 1 ano" },
+  { key: "2y", label: "Há 2 anos" },
+];
+
 export default async function PlatformDetail({
   params,
 }: PageProps<"/[lang]"> & { params: Promise<{ lang: string; slug: string }> }) {
@@ -23,110 +39,161 @@ export default async function PlatformDetail({
   if (!hasLocale(lang)) notFound();
 
   const dict = await getDictionary(lang);
-  const platform = await getPlatformBySlug(slug);
-  const platformWithHistory = await getPlatformWithAllPriceHistory(slug);
+  const country = await getSelectedCountry();
+  const countryName = getCountryName(country, lang);
+
+  const platform = await getPlatformBySlug(slug, country);
+  const platformWithHistory = await getPlatformWithAllPriceHistory(
+    slug,
+    country
+  );
 
   if (!platform || !platformWithHistory) notFound();
 
-  const planPrices = await getPlanPricesAtDates(platform.id);
-
-  const periods = [
-    { key: "6m", label: "Há 6 meses" },
-    { key: "1y", label: "Há 1 ano" },
-    { key: "2y", label: "Há 2 anos" },
-  ];
+  const planPrices = await getPlanPricesAtDates(platform.id, country);
+  const priceByOffer = new Map(
+    planPrices.map((price) => [price.offerId, price])
+  );
 
   const chartData = platformWithHistory.plans.flatMap((plan) =>
-    plan.priceHistory.map((h) => ({
-      recordedAt: h.recordedAt.toISOString(),
-      price: h.price,
-      planName: plan.name,
-    }))
+    plan.offers.flatMap((offer) =>
+      offer.history.map((history) => ({
+        recordedAt: history.recordedAt.toISOString(),
+        price: Number(history.amount),
+        planName: offer.displayName ?? plan.name,
+      }))
+    )
   );
 
   const planColorMap: Record<string, string> = {};
   platform.plans.forEach((plan, i) => {
-    planColorMap[plan.name] = chartColors[i % chartColors.length];
+    const name = plan.offers[0]?.displayName ?? plan.name;
+    planColorMap[name] = chartColors[i % chartColors.length];
   });
+
+  const availabilityStatus = platform.platformCountries[0]?.status;
 
   return (
     <div className="min-h-screen bg-paper">
       <Header lang={lang} title={dict.home.title} />
 
       <main className="mx-auto max-w-4xl px-4 py-12">
-        <div className="mb-8 flex items-center gap-3">
+        <div className="mb-2 flex items-center gap-3">
           <PlatformLogo platform={platform} size="lg" />
           <h1 className="text-3xl text-ink">{platform.name}</h1>
         </div>
+        <p className="mb-8 font-mono text-[11px] uppercase tracking-[0.14em] text-ink-faint">
+          {dict.country.pricesFor} {countryName} · {getCountryCurrency(country)}
+        </p>
 
         <section className="mb-10">
           <h2 className="mb-4 text-2xl text-ink">{dict.platform.plans}</h2>
           <div className="grid gap-2">
             {platform.plans.map((plan) => {
-              const latestPrice = plan.priceHistory[0];
-              const previousPrice = plan.priceHistory[1];
-              const prices = planPrices.find((p) => p.planId === plan.id);
-
-              return (
-                <div
-                  key={plan.id}
-                  className="rounded-md border border-line bg-surface p-5"
-                >
-                  <div className="mb-3 flex items-start justify-between gap-4">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-medium text-ink">{plan.name}</h3>
-                        {previousPrice && (
-                          <PriceBadge current={latestPrice!.price} previous={previousPrice.price} />
-                        )}
-                      </div>
-                      <p className="mt-1 text-xs text-ink-faint">
-                        {plan.ads ? "Com anúncios" : "Sem anúncios"}
-                        {plan.quality ? ` · ${plan.quality}` : ""}
-                        {plan.billingCycle !== "mensal" ? ` · ${plan.billingCycle}` : ""}
-                      </p>
-                    </div>
-                    <p className="flex-shrink-0 font-mono text-xl font-medium tnum text-ink">
-                      R$ {latestPrice?.price.toFixed(2) ?? plan.price.toFixed(2)}
-                      <span className="text-xs font-normal text-ink-faint">
-                        /{plan.billingCycle === "anual" ? "ano" : "mês"}
-                      </span>
+              if (plan.offers.length === 0) {
+                return (
+                  <div
+                    key={plan.id}
+                    className="rounded-md border border-line bg-surface p-5"
+                  >
+                    <h3 className="font-medium text-ink">
+                      {plan.name}
+                    </h3>
+                    <p className="mt-1 text-xs text-ink-faint">
+                      {availabilityStatus === "NOT_AVAILABLE"
+                        ? dict.country.notAvailable
+                        : dict.country.notCollected}
                     </p>
                   </div>
+                );
+              }
 
-                  {prices && (
-                    <div className="flex flex-wrap gap-2 text-xs">
-                      {periods.map(({ key, label }) => {
-                        const entry = prices.periodPrices[key];
-                        if (!entry) return null;
-                        const diff = (latestPrice?.price ?? plan.price) - entry.price;
-                        return (
-                          <div key={key} className="rounded-sm bg-surface-2 px-3 py-1.5">
-                            <span className="text-ink-faint">{label}:</span>
-                            <span className="ml-1.5 font-mono font-medium tnum text-ink">
-                              R$ {entry.price.toFixed(2)}
-                            </span>
-                            {diff !== 0 && (
-                              <span className={`ml-1 font-mono tnum ${diff > 0 ? "text-rise" : "text-fall"}`}>
-                                {diff > 0 ? "↑" : "↓"} {Math.abs(diff).toFixed(2)}
-                              </span>
-                            )}
-                          </div>
-                        );
-                      })}
+              return plan.offers.map((offer) => {
+                const latestPrice = offer.history[0]?.amount ?? offer.amount;
+                const previousPrice = offer.history[1]?.amount;
+                const prices = priceByOffer.get(offer.id);
+                const cycleLabel =
+                  offer.billingMonths === 12
+                    ? dict.pricing.year
+                    : dict.pricing.month;
 
-                      {prices.lowestPrice && (
-                        <div className="rounded-sm bg-fall-soft px-3 py-1.5 text-fall">
-                          <span className="font-medium">Menor preço: R$ {prices.lowestPrice.price.toFixed(2)}</span>
-                          <span className="ml-1 opacity-70">
-                            ({new Date(prices.lowestPrice.date).toLocaleDateString("pt-BR")})
-                          </span>
+                return (
+                  <div
+                    key={offer.id}
+                    className="rounded-md border border-line bg-surface p-5"
+                  >
+                    <div className="mb-3 flex items-start justify-between gap-4">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-medium text-ink">
+                            {offer.displayName ?? plan.name}
+                          </h3>
+                          {previousPrice !== undefined && (
+                            <PriceBadge
+                              current={Number(latestPrice)}
+                              previous={Number(previousPrice)}
+                              currency={offer.currency}
+                              locale={lang}
+                            />
+                          )}
                         </div>
-                      )}
+                        <p className="mt-1 text-xs text-ink-faint">
+                          {offer.ads ? "Com anúncios" : "Sem anúncios"}
+                          {offer.quality ? ` · ${offer.quality}` : ""}
+                          {offer.billingCycle !== "MONTHLY"
+                            ? ` · ${cycleLabel}`
+                            : ""}
+                        </p>
+                      </div>
+                      <p className="flex-shrink-0 font-mono text-xl font-medium tnum text-ink">
+                        {formatMoney(latestPrice, offer.currency, lang)}
+                        <span className="text-xs font-normal text-ink-faint">
+                          /{cycleLabel}
+                        </span>
+                      </p>
                     </div>
-                  )}
-                </div>
-              );
+
+                    {prices && (
+                      <div className="flex flex-wrap gap-2 text-xs">
+                        {periods.map(({ key, label }) => {
+                          const entry = prices.periodPrices[key];
+                          if (!entry) return null;
+                          const diff = Number(latestPrice) - entry.amount;
+                          return (
+                            <div key={key} className="rounded-sm bg-surface-2 px-3 py-1.5">
+                              <span className="text-ink-faint">{label}:</span>
+                              <span className="ml-1.5 font-mono font-medium tnum text-ink">
+                                {formatMoney(entry.amount, offer.currency, lang)}
+                              </span>
+                              {diff !== 0 && (
+                                <span className={`ml-1 font-mono tnum ${diff > 0 ? "text-rise" : "text-fall"}`}>
+                                  {diff > 0 ? "↑" : "↓"} {formatMoney(Math.abs(diff), offer.currency, lang)}
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })}
+
+                        {prices.lowestPrice && (
+                          <div className="rounded-sm bg-fall-soft px-3 py-1.5 text-fall">
+                            <span className="font-medium">
+                              Menor preço:{" "}
+                              {formatMoney(
+                                prices.lowestPrice.amount,
+                                offer.currency,
+                                lang
+                              )}
+                            </span>
+                            <span className="ml-1 opacity-70">
+                              ({new Date(prices.lowestPrice.date).toLocaleDateString(lang)})
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              });
             })}
           </div>
         </section>
@@ -137,7 +204,12 @@ export default async function PlatformDetail({
               {dict.platform.priceHistory}
             </h2>
             <div className="rounded-md border border-line bg-surface p-5">
-              <PriceHistoryChart data={chartData} planColors={planColorMap} />
+              <PriceHistoryChart
+                data={chartData}
+                planColors={planColorMap}
+                currency={getCountryCurrency(country)}
+                locale={lang}
+              />
             </div>
           </section>
         )}
@@ -178,7 +250,7 @@ export default async function PlatformDetail({
               >
                 <span className="min-w-0 flex-1 leading-snug text-ink-muted">{c.description}</span>
                 <span className="mt-0.5 flex-shrink-0 font-mono text-xs tnum text-ink-faint">
-                  {new Date(c.createdAt).toLocaleDateString("pt-BR")}
+                  {new Date(c.createdAt).toLocaleDateString(lang)}
                 </span>
               </div>
             ))}

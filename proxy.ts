@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSessionCookie } from "better-auth/cookies";
 import { defaultLocale, locales } from "./lib/locales";
 import type { Locale } from "./lib/locales";
+import {
+  COUNTRY_COOKIE,
+  countryForLocale,
+  isCountry,
+} from "./lib/countries";
 
 /** Idioma preferido do navegador, restrito aos locales suportados. */
 function getLocale(request: NextRequest): Locale {
@@ -36,6 +41,30 @@ function hasLocale(pathname: string): boolean {
 }
 
 /**
+ * Semeia o país na primeira visita: geolocalização da Vercel quando
+ * disponível, senão o idioma do navegador. O usuário pode trocar no header,
+ * e aí o cookie passa a mandar.
+ */
+function withCountry(
+  request: NextRequest,
+  response: NextResponse,
+  locale: Locale
+): NextResponse {
+  if (request.cookies.get(COUNTRY_COOKIE)?.value) return response;
+
+  const geo = request.headers.get("x-vercel-ip-country");
+  const country = isCountry(geo) ? geo : countryForLocale(locale);
+
+  response.cookies.set(COUNTRY_COOKIE, country, {
+    path: "/",
+    maxAge: 60 * 60 * 24 * 365,
+    sameSite: "lax",
+  });
+
+  return response;
+}
+
+/**
  * Redireciona a raiz (e qualquer caminho sem idioma) para o locale do
  * navegador. Também faz a checagem otimística de sessão apenas pela presença
  * do cookie (sem consulta ao banco, como recomendado pelo Better Auth). A
@@ -55,13 +84,12 @@ export function proxy(request: NextRequest) {
   }
 
   if (!hasLocale(pathname)) {
+    const locale = getLocale(request);
     const url = request.nextUrl.clone();
-    url.pathname = `/${getLocale(request)}${
-      pathname === "/" ? "" : pathname
-    }`;
+    url.pathname = `/${locale}${pathname === "/" ? "" : pathname}`;
     const response = NextResponse.redirect(url);
     response.headers.set("Vary", "Accept-Language");
-    return response;
+    return withCountry(request, response, locale);
   }
 
   const [, lang, segment] = pathname.split("/");
@@ -69,7 +97,11 @@ export function proxy(request: NextRequest) {
 
   // Rota protegida: sem cookie → leva pro login.
   if (segment === "profile" && !sessionCookie) {
-    return NextResponse.redirect(new URL(`/${lang}/login`, request.url));
+    return withCountry(
+      request,
+      NextResponse.redirect(new URL(`/${lang}/login`, request.url)),
+      lang as Locale
+    );
   }
 
   // Quem já tem cookie não precisa ver login/registro.
@@ -77,10 +109,14 @@ export function proxy(request: NextRequest) {
     (segment === "login" || segment === "register") &&
     sessionCookie
   ) {
-    return NextResponse.redirect(new URL(`/${lang}`, request.url));
+    return withCountry(
+      request,
+      NextResponse.redirect(new URL(`/${lang}`, request.url)),
+      lang as Locale
+    );
   }
 
-  return NextResponse.next();
+  return withCountry(request, NextResponse.next(), lang as Locale);
 }
 
 export const config = {

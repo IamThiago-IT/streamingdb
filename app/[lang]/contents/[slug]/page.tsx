@@ -51,7 +51,7 @@ export default async function ContentDetail({
                   <span className="truncate font-medium text-ink">{a.platform.name}</span>
                 </div>
                 <span className="font-mono text-xs tnum text-ink-faint">
-                  {new Date(a.addedAt).toLocaleDateString("pt-BR")}
+                  {new Date(a.addedAt).toLocaleDateString(lang)}
                 </span>
               </Link>
             ))}
@@ -69,7 +69,7 @@ export default async function ContentDetail({
                 >
                   <span className="min-w-0 flex-1 leading-snug text-ink-muted">{c.description}</span>
                   <span className="mt-0.5 flex-shrink-0 font-mono text-xs tnum text-ink-faint">
-                    {new Date(c.createdAt).toLocaleDateString("pt-BR")}
+                    {new Date(c.createdAt).toLocaleDateString(lang)}
                   </span>
                 </div>
               ))}

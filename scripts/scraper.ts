@@ -2,12 +2,17 @@ import "dotenv/config";
 import { PrismaClient } from "@/app/generated/prisma/client";
 import { createPrismaAdapter } from "@/lib/db-adapter";
 import * as cheerio from "cheerio";
+import { formatMoney } from "@/lib/money";
 
 const prisma = new PrismaClient({ adapter: createPrismaAdapter() });
 
 interface ScraperConfig {
   name: string;
   slug: string;
+  countryCode: string;
+  currency: string;
+  locale: string;
+  taxIncluded: boolean;
   url: string;
   selectors: {
     plans: string;
@@ -20,13 +25,26 @@ const scrapers: ScraperConfig[] = [
   {
     name: "Looke",
     slug: "looke",
+    countryCode: "BR",
+    currency: "BRL",
+    locale: "pt-BR",
+    taxIncluded: true,
     url: "https://www.looke.com.br/planos",
     selectors: { plans: ".plan-card", name: ".plan-name", price: ".plan-price" },
   },
 ];
 
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+}
+
 async function scrapePlatform(config: ScraperConfig) {
-  console.log(`Scraping ${config.name}...`);
+  console.log(`Scraping ${config.name} (${config.countryCode})...`);
 
   try {
     const res = await fetch(config.url, {
@@ -61,69 +79,158 @@ async function scrapePlatform(config: ScraperConfig) {
   }
 }
 
-async function updatePlatform(slug: string, scrapedPlans: { name: string; price: number }[]) {
+async function updatePlatform(
+  config: ScraperConfig,
+  scrapedPlans: { name: string; price: number }[]
+) {
   const platform = await prisma.platform.findUnique({
-    where: { slug },
-    include: { plans: true },
+    where: { slug: config.slug },
+    include: {
+      plans: {
+        include: {
+          offers: {
+            where: {
+              countryCode: config.countryCode,
+              billingCycle: "MONTHLY",
+            },
+            include: {
+              history: { orderBy: { recordedAt: "desc" }, take: 1 },
+            },
+          },
+        },
+      },
+    },
   });
 
   if (!platform) {
-    console.warn(`  Platform ${slug} not found in DB`);
+    console.warn(`  Platform ${config.slug} not found in DB`);
     return;
   }
 
-  for (const sp of scrapedPlans) {
+  for (const scrapedPlan of scrapedPlans) {
+    const tierKey = slugify(scrapedPlan.name);
     const existingPlan = platform.plans.find(
-      (p) => p.name.toLowerCase() === sp.name.toLowerCase()
+      (plan) =>
+        plan.tierKey === tierKey ||
+        plan.name.toLowerCase() === scrapedPlan.name.toLowerCase()
     );
 
+    let planId: string;
     if (existingPlan) {
-      const latestHistory = await prisma.priceHistory.findFirst({
-        where: { planId: existingPlan.id },
-        orderBy: { recordedAt: "desc" },
+      planId = existingPlan.id;
+    } else {
+      const created = await prisma.plan.create({
+        data: {
+          platformId: platform.id,
+          tierKey,
+          name: scrapedPlan.name,
+        },
       });
+      planId = created.id;
+    }
 
-      if (latestHistory && Math.abs(latestHistory.price - sp.price) > 0.01) {
+    const existingOffer = existingPlan?.offers[0];
+    const now = new Date();
+
+    if (existingOffer) {
+      const latestHistory = existingOffer.history[0];
+      const previousAmount = Number(
+        latestHistory?.amount ?? existingOffer.amount
+      );
+      const previousCurrency = latestHistory?.currency ?? existingOffer.currency;
+
+      if (Math.abs(previousAmount - scrapedPlan.price) > 0.01) {
         await prisma.priceHistory.create({
-          data: { planId: existingPlan.id, price: sp.price },
+          data: {
+            offerId: existingOffer.id,
+            amount: scrapedPlan.price,
+            currency: config.currency,
+            taxIncluded: config.taxIncluded,
+            recordedAt: now,
+          },
+        });
+
+        await prisma.planOffer.update({
+          where: { id: existingOffer.id },
+          data: {
+            amount: scrapedPlan.price,
+            currency: config.currency,
+            taxIncluded: config.taxIncluded,
+            status: "ACTIVE",
+            lastCheckedAt: now,
+            lastSuccessAt: now,
+          },
         });
 
         await prisma.changeLog.create({
           data: {
             type: "PRICE_CHANGE",
-            description: `${platform.name}: ${existingPlan.name} mudou de R$ ${latestHistory.price.toFixed(2)} para R$ ${sp.price.toFixed(2)}`,
+            description: `${platform.name} (${config.countryCode}): ${scrapedPlan.name} mudou de ${formatMoney(previousAmount, previousCurrency, config.locale)} para ${formatMoney(scrapedPlan.price, config.currency, config.locale)}`,
             platformId: platform.id,
-            oldValue: String(latestHistory.price),
-            newValue: String(sp.price),
+            countryCode: config.countryCode,
+            currency: config.currency,
+            oldValue: String(previousAmount),
+            newValue: String(scrapedPlan.price),
           },
         });
 
-        console.log(`  ⚡ ${existingPlan.name}: R$ ${latestHistory.price} → R$ ${sp.price}`);
+        console.log(
+          `  ⚡ ${scrapedPlan.name}: ${formatMoney(previousAmount, previousCurrency, config.locale)} → ${formatMoney(scrapedPlan.price, config.currency, config.locale)}`
+        );
+      } else {
+        await prisma.planOffer.update({
+          where: { id: existingOffer.id },
+          data: {
+            status: "ACTIVE",
+            lastCheckedAt: now,
+            lastSuccessAt: now,
+          },
+        });
       }
     } else {
-      const newPlan = await prisma.plan.create({
+      const offer = await prisma.planOffer.create({
         data: {
-          platformId: platform.id,
-          name: sp.name,
-          price: sp.price,
+          planId,
+          countryCode: config.countryCode,
+          currency: config.currency,
+          amount: scrapedPlan.price,
+          billingCycle: "MONTHLY",
+          billingMonths: 1,
+          taxIncluded: config.taxIncluded,
+          displayName: scrapedPlan.name,
           ads: false,
+          sourceUrl: config.url,
+          sourceType: "OFFICIAL_WEB",
+          status: "ACTIVE",
+          lastCheckedAt: now,
+          lastSuccessAt: now,
         },
       });
 
       await prisma.priceHistory.create({
-        data: { planId: newPlan.id, price: sp.price },
+        data: {
+          offerId: offer.id,
+          amount: scrapedPlan.price,
+          currency: config.currency,
+          taxIncluded: config.taxIncluded,
+          recordedAt: now,
+        },
       });
 
       await prisma.changeLog.create({
         data: {
           type: "PLAN_CHANGE",
-          description: `${platform.name}: Novo plano "${sp.name}" por R$ ${sp.price.toFixed(2)}`,
+          description: `${platform.name} (${config.countryCode}): Novo plano "${scrapedPlan.name}" por ${formatMoney(scrapedPlan.price, config.currency, config.locale)}`,
           platformId: platform.id,
-          newValue: String(sp.price),
+          countryCode: config.countryCode,
+          currency: config.currency,
+          newValue: String(scrapedPlan.price),
         },
       });
 
-      console.log(`  🆕 Novo plano: ${sp.name} - R$ ${sp.price}`);
+      console.log(
+        `  🆕 Novo plano: ${scrapedPlan.name} - ${formatMoney(scrapedPlan.price, config.currency, config.locale)}`
+      );
     }
   }
 }
@@ -134,7 +241,7 @@ async function main() {
   for (const config of scrapers) {
     const plans = await scrapePlatform(config);
     if (plans.length > 0) {
-      await updatePlatform(config.slug, plans);
+      await updatePlatform(config, plans);
     }
   }
 

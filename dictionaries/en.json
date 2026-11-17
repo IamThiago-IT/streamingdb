@@ -15,6 +15,23 @@
     "contents": "Catalog",
     "changes": "Changes"
   },
+  "country": {
+    "label": "Country",
+    "pricesFor": "Prices for",
+    "changesFor": "Changes in",
+    "noPrice": "No price for this country",
+    "notAvailable": "Not available in this country",
+    "notCollected": "Price not collected yet",
+    "stale": "Updated",
+    "taxIncluded": "Taxes included",
+    "taxNotIncluded": "Taxes not included"
+  },
+  "pricing": {
+    "month": "month",
+    "year": "year",
+    "annual": "annual",
+    "monthly": "monthly"
+  },
   "platforms": {
     "title": "Streaming Platforms",
     "plans": "Plans",

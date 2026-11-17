@@ -5,6 +5,9 @@ import { getDictionary, hasLocale } from "../dictionaries";
 import { getPlatforms } from "@/lib/queries";
 import Header from "@/components/Header";
 import PlatformLogo from "@/components/PlatformLogo";
+import { getSelectedCountry } from "@/lib/country";
+import { formatMoney, monthlyAmount } from "@/lib/money";
+import { getCountryName } from "@/lib/countries";
 
 export default async function ComparePage({
   params,
@@ -15,7 +18,9 @@ export default async function ComparePage({
   if (!hasLocale(lang)) notFound();
 
   const dict = await getDictionary(lang);
-  const platforms = await getPlatforms();
+  const country = await getSelectedCountry();
+  const countryName = getCountryName(country, lang);
+  const platforms = await getPlatforms(country);
 
   const selectedSlugs =
     typeof sp.platforms === "string"
@@ -29,9 +34,12 @@ export default async function ComparePage({
       <Header lang={lang} title={dict.home.title} />
 
       <main className="mx-auto max-w-6xl px-4 py-12">
-        <h1 className="mb-6 text-3xl text-ink">
+        <h1 className="mb-1 text-3xl text-ink">
           Comparar plataformas
         </h1>
+        <p className="mb-6 font-mono text-[11px] uppercase tracking-[0.14em] text-ink-faint">
+          {dict.country.pricesFor} {countryName}
+        </p>
 
         <form className="mb-8 flex flex-wrap items-end gap-3">
           <div className="min-w-[200px] flex-1">
@@ -86,10 +94,32 @@ export default async function ComparePage({
                 <tr className="bg-surface">
                   <td className="px-4 py-3 text-ink-muted">Preço mínimo</td>
                   {selected.map((p) => {
-                    const min = Math.min(...p.plans.map((pl) => pl.price));
+                    const offers = p.plans.flatMap((plan) => plan.offers);
+                    const minOffer = [...offers].sort(
+                      (a, b) =>
+                        monthlyAmount(a.amount, a.billingMonths) -
+                        monthlyAmount(b.amount, b.billingMonths)
+                    )[0];
+
                     return (
                       <td key={p.id} className="px-4 py-3 font-mono text-[13px] tnum text-ink">
-                        R$ {min.toFixed(2)}
+                        {minOffer ? (
+                          <>
+                            {formatMoney(
+                              monthlyAmount(
+                                minOffer.amount,
+                                minOffer.billingMonths
+                              ),
+                              minOffer.currency,
+                              lang
+                            )}
+                            <span className="text-[10px] font-normal text-ink-faint">
+                              /{dict.pricing.month}
+                            </span>
+                          </>
+                        ) : (
+                          <span className="text-ink-faint">—</span>
+                        )}
                       </td>
                     );
                   })}
@@ -98,7 +128,7 @@ export default async function ComparePage({
                   <td className="px-4 py-3 text-ink-muted">Planos disponíveis</td>
                   {selected.map((p) => (
                     <td key={p.id} className="px-4 py-3 font-mono text-[13px] tnum text-ink">
-                      {p.plans.length}
+                      {p.plans.filter((plan) => plan.offers.length > 0).length}
                     </td>
                   ))}
                 </tr>
@@ -113,7 +143,10 @@ export default async function ComparePage({
                 <tr className="bg-surface-2">
                   <td className="px-4 py-3 text-ink-muted">Qualidade máxima</td>
                   {selected.map((p) => {
-                    const qualities = p.plans.map((pl) => pl.quality).filter(Boolean);
+                    const qualities = p.plans
+                      .flatMap((plan) => plan.offers)
+                      .map((offer) => offer.quality)
+                      .filter(Boolean);
                     const max = [...new Set(qualities)].sort().reverse()[0] ?? "HD";
                     return (
                       <td key={p.id} className="px-4 py-3 text-ink">
@@ -125,7 +158,9 @@ export default async function ComparePage({
                 <tr className="bg-surface">
                   <td className="px-4 py-3 text-ink-muted">Plano com anúncios</td>
                   {selected.map((p) => {
-                    const hasAds = p.plans.some((pl) => pl.ads);
+                    const hasAds = p.plans
+                      .flatMap((plan) => plan.offers)
+                      .some((offer) => offer.ads);
                     return (
                       <td key={p.id} className="px-4 py-3">
                         {hasAds ? (
@@ -144,22 +179,40 @@ export default async function ComparePage({
                         colSpan={selected.length + 1}
                         className="px-4 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-ink-faint"
                       >
-                        {p.name} · {p.plans.length} {p.plans.length === 1 ? "plano" : "planos"}
+                        {p.name} · {p.plans.filter((plan) => plan.offers.length > 0).length}{" "}
+                        {p.plans.filter((plan) => plan.offers.length > 0).length === 1
+                          ? "plano"
+                          : "planos"}
                       </td>
                     </tr>
-                    {p.plans.map((plan) => (
-                      <tr key={plan.id} className="bg-surface">
-                        <td className="py-2 pl-8 pr-4 text-xs text-ink-faint">{plan.name}</td>
+                    {p.plans.map((plan) =>
+                      plan.offers.map((offer) => (
+                        <tr key={offer.id} className="bg-surface">
+                          <td className="py-2 pl-8 pr-4 text-xs text-ink-faint">
+                            {offer.displayName ?? plan.name}
+                          </td>
+                          <td
+                            colSpan={selected.length}
+                            className="px-4 py-2 font-mono text-[13px] tnum text-ink"
+                          >
+                            {formatMoney(offer.amount, offer.currency, lang)}
+                            /{offer.billingMonths === 12 ? dict.pricing.year : dict.pricing.month}
+                            {offer.ads ? " · com anúncios" : ""}
+                            {offer.quality ? ` · ${offer.quality}` : ""}
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                    {p.plans.every((plan) => plan.offers.length === 0) && (
+                      <tr className="bg-surface">
                         <td
-                          colSpan={selected.length}
-                          className="px-4 py-2 font-mono text-[13px] tnum text-ink"
+                          colSpan={selected.length + 1}
+                          className="px-4 py-3 text-xs text-ink-faint"
                         >
-                          R$ {plan.price.toFixed(2)}/{plan.billingCycle === "anual" ? "ano" : "mês"}
-                          {plan.ads ? " · com anúncios" : ""}
-                          {plan.quality ? ` · ${plan.quality}` : ""}
+                          {dict.country.notCollected}
                         </td>
                       </tr>
-                    ))}
+                    )}
                   </Fragment>
                 ))}
               </tbody>
