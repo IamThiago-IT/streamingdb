@@ -1,0 +1,53 @@
+platform_slug,country_code,tier_key,display_name,currency,amount,billing_cycle,billing_months,tax_included,quality,ads,source_url,source_type,verified_at
+apple-tv-plus,BR,mensal,Plano Mensal,BRL,34.90,MONTHLY,1,true,4K HDR,false,https://www.apple.com/br/apple-tv/,OFFICIAL_WEB,2026-11-17
+apple-tv-plus,US,mensal,Monthly,USD,14.99,MONTHLY,1,false,4K HDR,false,https://www.apple.com/apple-tv/,OFFICIAL_WEB,2026-11-17
+apple-tv-plus,CA,mensal,Monthly,CAD,14.99,MONTHLY,1,false,4K HDR,false,https://www.apple.com/ca/apple-tv/,OFFICIAL_WEB,2026-11-17
+apple-tv-plus,GB,mensal,Monthly,GBP,9.99,MONTHLY,1,true,4K HDR,false,https://www.apple.com/uk/apple-tv/,OFFICIAL_WEB,2026-11-17
+apple-tv-plus,AU,mensal,Monthly,AUD,15.99,MONTHLY,1,true,4K HDR,false,https://www.apple.com/au/apple-tv/,OFFICIAL_WEB,2026-11-17
+apple-tv-plus,MX,mensal,Plan Mensual,MXN,199.00,MONTHLY,1,true,4K HDR,false,https://www.apple.com/mx/apple-tv/,OFFICIAL_WEB,2026-11-17
+apple-tv-plus,DE,mensal,Monatliches Abo,EUR,9.99,MONTHLY,1,true,4K HDR,false,https://www.apple.com/de/apple-tv/,OFFICIAL_WEB,2026-11-17
+apple-tv-plus,PT,mensal,Plano Mensal,EUR,9.99,MONTHLY,1,true,4K HDR,false,https://www.apple.com/pt/apple-tv/,OFFICIAL_WEB,2026-11-17
+apple-tv-plus,ES,mensal,Plan Mensual,EUR,9.99,MONTHLY,1,true,4K HDR,false,https://www.apple.com/es/apple-tv/,OFFICIAL_WEB,2026-11-17
+apple-tv-plus,JP,mensal,月額プラン,JPY,1200,MONTHLY,1,true,4K HDR,false,https://www.apple.com/jp/apple-tv/,OFFICIAL_WEB,2026-11-17
+apple-tv-plus,IN,mensal,Monthly,INR,99,MONTHLY,1,true,4K HDR,false,https://www.apple.com/in/apple-tv/,OFFICIAL_WEB,2026-11-17
+apple-tv-plus,KR,mensal,월간 멤버십,KRW,6500,MONTHLY,1,true,4K HDR,false,https://www.apple.com/kr/apple-tv/,OFFICIAL_WEB,2026-11-17
+prime-video,BR,mensal,Amazon Prime,BRL,19.90,MONTHLY,1,true,4K HDR,false,https://www.amazon.com.br/prime,OFFICIAL_WEB,2026-11-17
+prime-video,US,mensal,Amazon Prime,USD,14.99,MONTHLY,1,false,4K HDR,false,https://www.amazon.com/prime,OFFICIAL_WEB,2026-11-17
+prime-video,CA,mensal,Amazon Prime,CAD,9.99,MONTHLY,1,false,4K HDR,false,https://www.amazon.ca/prime,OFFICIAL_WEB,2026-11-17
+prime-video,GB,mensal,Amazon Prime,GBP,8.99,MONTHLY,1,true,4K HDR,false,https://www.amazon.co.uk/prime,OFFICIAL_WEB,2026-11-17
+prime-video,AU,mensal,Amazon Prime,AUD,12.99,MONTHLY,1,true,4K HDR,false,https://www.amazon.com.au/prime,OFFICIAL_WEB,2026-11-17
+prime-video,MX,mensal,Amazon Prime,MXN,129.00,MONTHLY,1,true,4K HDR,false,https://www.amazon.com.mx/prime,OFFICIAL_WEB,2026-11-17
+prime-video,DE,mensal,Amazon Prime,EUR,8.99,MONTHLY,1,true,4K HDR,false,https://www.amazon.de/prime,OFFICIAL_WEB,2026-11-17
+prime-video,ES,mensal,Amazon Prime,EUR,4.99,MONTHLY,1,true,4K HDR,false,https://www.amazon.es/prime,OFFICIAL_WEB,2026-11-17
+prime-video,JP,mensal,Amazon Prime,JPY,600,MONTHLY,1,true,4K HDR,false,https://www.amazon.co.jp/prime,OFFICIAL_WEB,2026-11-17
+prime-video,IN,mensal,Amazon Prime,INR,299,MONTHLY,1,true,4K HDR,false,https://www.amazon.in/prime,OFFICIAL_WEB,2026-11-17
+disney-plus,BR,premium,Premium,BRL,69.90,MONTHLY,1,true,4K HDR,false,https://www.disneyplus.com/pt-br,OFFICIAL_WEB,2026-11-17
+disney-plus,BR,padrao,Padrão,BRL,49.90,MONTHLY,1,true,HD,false,https://www.disneyplus.com/pt-br,OFFICIAL_WEB,2026-11-17
+disney-plus,BR,com-anuncios,Padrão com Anúncios,BRL,29.90,MONTHLY,1,true,HD,true,https://www.disneyplus.com/pt-br,OFFICIAL_WEB,2026-11-17
+disney-plus,GB,premium,Premium,GBP,15.99,MONTHLY,1,true,4K HDR,false,https://www.disneyplus.com/en-gb,OFFICIAL_WEB,2026-11-17
+disney-plus,GB,padrao,Standard,GBP,11.99,MONTHLY,1,true,HD,false,https://www.disneyplus.com/en-gb,OFFICIAL_WEB,2026-11-17
+disney-plus,GB,com-anuncios,Standard with Ads,GBP,6.99,MONTHLY,1,true,HD,true,https://www.disneyplus.com/en-gb,OFFICIAL_WEB,2026-11-17
+disney-plus,JP,premium,プレミアム,JPY,1670,MONTHLY,1,true,4K HDR,false,https://www.disneyplus.com/ja-jp,OFFICIAL_WEB,2026-11-17
+disney-plus,JP,padrao,スタンダード,JPY,1250,MONTHLY,1,true,HD,false,https://www.disneyplus.com/ja-jp,OFFICIAL_WEB,2026-11-17
+netflix,BR,com-anuncios,Padrão com Anúncios,BRL,25.90,MONTHLY,1,true,HD,true,https://help.netflix.com/en/node/24926,HELP_CENTER,2026-11-17
+netflix,BR,padrao,Padrão,BRL,51.90,MONTHLY,1,true,HD,false,https://help.netflix.com/en/node/24926,HELP_CENTER,2026-11-17
+netflix,BR,premium,Premium,BRL,71.90,MONTHLY,1,true,4K HDR,false,https://help.netflix.com/en/node/24926,HELP_CENTER,2026-11-17
+youtube-premium,BR,individual,Plano Individual,BRL,26.90,MONTHLY,1,true,4K,false,https://www.youtube.com/premium,OFFICIAL_WEB,2026-11-17
+youtube-premium,BR,familiar,Plano Familiar,BRL,53.90,MONTHLY,1,true,4K,false,https://www.youtube.com/premium,OFFICIAL_WEB,2026-11-17
+paramount-plus,BR,padrao,Plano Padrão,BRL,34.90,MONTHLY,1,true,HD,false,https://www.paramountplus.com/br/,OFFICIAL_WEB,2026-11-17
+mubi,BR,mensal,Plano Mensal,BRL,34.90,MONTHLY,1,true,HD,false,https://mubi.com/pt/br,OFFICIAL_WEB,2026-11-17
+hbo-max,US,basico-com-anuncios,Basic With Ads,USD,10.99,MONTHLY,1,false,HD,true,https://www.hbomax.com/,OFFICIAL_WEB,2026-11-17
+hbo-max,US,standard,Standard,USD,18.49,MONTHLY,1,false,HD,false,https://www.hbomax.com/,OFFICIAL_WEB,2026-11-17
+hbo-max,US,platinum,Premium,USD,22.99,MONTHLY,1,false,4K HDR,false,https://www.hbomax.com/,OFFICIAL_WEB,2026-11-17
+disney-plus,CA,com-anuncios,Standard with Ads,CAD,8.99,MONTHLY,1,false,HD,true,https://www.disneyplus.com/en-ca,OFFICIAL_WEB,2026-11-17
+disney-plus,CA,padrao,Standard,CAD,15.99,MONTHLY,1,false,HD,false,https://www.disneyplus.com/en-ca,OFFICIAL_WEB,2026-11-17
+disney-plus,CA,premium,Premium,CAD,16.99,MONTHLY,1,false,4K HDR,false,https://www.disneyplus.com/en-ca,OFFICIAL_WEB,2026-11-17
+disney-plus,AU,com-anuncios,Standard with Ads,AUD,9.99,MONTHLY,1,true,HD,true,https://www.disneyplus.com/en-au,OFFICIAL_WEB,2026-11-17
+disney-plus,AU,padrao,Standard,AUD,17.99,MONTHLY,1,true,HD,false,https://www.disneyplus.com/en-au,OFFICIAL_WEB,2026-11-17
+disney-plus,AU,premium,Premium,AUD,24.99,MONTHLY,1,true,4K HDR,false,https://www.disneyplus.com/en-au,OFFICIAL_WEB,2026-11-17
+disney-plus,KR,com-anuncios,광고형 스탠다드,KRW,7000,MONTHLY,1,true,HD,true,https://www.disneyplus.com/ko-kr,OFFICIAL_WEB,2026-11-17
+disney-plus,KR,padrao,스탠다드,KRW,11500,MONTHLY,1,true,HD,false,https://www.disneyplus.com/ko-kr,OFFICIAL_WEB,2026-11-17
+disney-plus,KR,premium,프리미엄,KRW,16500,MONTHLY,1,true,4K HDR,false,https://www.disneyplus.com/ko-kr,OFFICIAL_WEB,2026-11-17
+disney-plus,ES,com-anuncios,Estándar con anuncios,EUR,6.99,MONTHLY,1,true,HD,true,https://www.disneyplus.com/es-es,OFFICIAL_WEB,2026-11-17
+disney-plus,ES,padrao,Estándar,EUR,10.99,MONTHLY,1,true,HD,false,https://www.disneyplus.com/es-es,OFFICIAL_WEB,2026-11-17
+disney-plus,ES,premium,Prémium,EUR,15.99,MONTHLY,1,true,4K HDR,false,https://www.disneyplus.com/es-es,OFFICIAL_WEB,2026-11-17

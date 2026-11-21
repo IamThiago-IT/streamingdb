@@ -1,6 +1,9 @@
 import { prisma } from "@/lib/db";
 import { locales } from "@/lib/locales";
 
+// Gerado sob demanda: o build (ex.: imagem Docker) não depende do banco.
+export const dynamic = "force-dynamic";
+
 export default async function sitemap() {
   const baseUrl = "https://streamingdb.app";
 

@@ -30,7 +30,8 @@
     "month": "month",
     "year": "year",
     "annual": "annual",
-    "monthly": "monthly"
+    "monthly": "monthly",
+    "months": "months"
   },
   "platforms": {
     "title": "Streaming Platforms",
@@ -47,7 +48,10 @@
     "catalog": "Content Catalog",
     "changes": "Recent Changes",
     "contentCount": "titles available",
-    "priceHistory": "Price History"
+    "priceHistory": "Price History",
+    "bestPrice": "Best Price",
+    "signInToSubscribe": "Sign in to subscribe",
+    "subscribe": "Subscribe"
   },
   "contents": {
     "title": "Content Catalog",
@@ -78,5 +82,38 @@
       "NEW_PLATFORM": "New platform",
       "PLAN_CHANGE": "Plan change"
     }
+  },
+  "compare": {
+    "title": "Compare platforms",
+    "pick": "Choose 2 to 3 platforms",
+    "selectedCount": "{count} of 3 selected",
+    "compare": "Compare",
+    "loading": "Comparing...",
+    "clear": "Clear",
+    "hint": "Select at least 2 platforms.",
+    "max": "Maximum of 3 platforms.",
+    "emptyTitle": "Select at least 2 platforms",
+    "emptyHint": "Choose the platforms above and click Compare.",
+    "oneSelected": "Select one more platform to compare.",
+    "feature": "Feature",
+    "cheapest": "Cheapest plan",
+    "cheapestNoAds": "Cheapest ad-free",
+    "planCount": "Available plans",
+    "catalog": "Titles in catalog",
+    "maxQuality": "Max quality",
+    "adsOption": "Ad-supported option",
+    "availability": "Availability",
+    "available": "Available",
+    "notAvailable": "Not available",
+    "unavailable": "Not available in this country",
+    "bestPrice": "Best price",
+    "plansTitle": "Plans by platform",
+    "remove": "Remove",
+    "withAds": "With ads",
+    "withoutAds": "Ad-free",
+    "monthlyEquivalent": "monthly equivalent",
+    "yes": "Yes",
+    "no": "No",
+    "viewPlatform": "View platform"
   }
 }

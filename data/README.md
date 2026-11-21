@@ -1,5 +1,8 @@
 # Ofertas de preço nativo
 
+> Contexto do modelo de preços, importação e coleta:
+> [`docs/pricing.md`](../docs/pricing.md).
+
 Cada linha é uma oferta real de um plano em um país. A moeda é derivada do
 país (`lib/countries.ts`); não existe conversão cambial.
 

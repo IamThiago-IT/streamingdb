@@ -30,7 +30,8 @@
     "month": "mês",
     "year": "ano",
     "annual": "anual",
-    "monthly": "mensal"
+    "monthly": "mensal",
+    "months": "meses"
   },
   "platforms": {
     "title": "Plataformas de Streaming",
@@ -47,7 +48,10 @@
     "catalog": "Catálogo de Conteúdos",
     "changes": "Mudanças Recentes",
     "contentCount": "conteúdos disponíveis",
-    "priceHistory": "Histórico de Preços"
+    "priceHistory": "Histórico de Preços",
+    "bestPrice": "Melhor preço",
+    "signInToSubscribe": "Entrar para assinar",
+    "subscribe": "Assinar"
   },
   "contents": {
     "title": "Catálogo de Conteúdos",
@@ -78,5 +82,38 @@
       "NEW_PLATFORM": "Nova plataforma",
       "PLAN_CHANGE": "Mudança de plano"
     }
+  },
+  "compare": {
+    "title": "Comparar plataformas",
+    "pick": "Escolha de 2 a 3 plataformas",
+    "selectedCount": "{count} de 3 selecionadas",
+    "compare": "Comparar",
+    "loading": "Comparando...",
+    "clear": "Limpar",
+    "hint": "Selecione pelo menos 2 plataformas.",
+    "max": "Máximo de 3 plataformas.",
+    "emptyTitle": "Selecione pelo menos 2 plataformas",
+    "emptyHint": "Escolha as plataformas acima e clique em Comparar.",
+    "oneSelected": "Selecione mais uma plataforma para comparar.",
+    "feature": "Característica",
+    "cheapest": "Plano mais barato",
+    "cheapestNoAds": "Mais barato sem anúncios",
+    "planCount": "Planos disponíveis",
+    "catalog": "Conteúdos no catálogo",
+    "maxQuality": "Qualidade máxima",
+    "adsOption": "Opção com anúncios",
+    "availability": "Disponibilidade",
+    "available": "Disponível",
+    "notAvailable": "Não disponível",
+    "unavailable": "Indisponível neste país",
+    "bestPrice": "Melhor preço",
+    "plansTitle": "Planos por plataforma",
+    "remove": "Remover",
+    "withAds": "Com anúncios",
+    "withoutAds": "Sem anúncios",
+    "monthlyEquivalent": "equivalente mensal",
+    "yes": "Sim",
+    "no": "Não",
+    "viewPlatform": "Ver plataforma"
   }
 }

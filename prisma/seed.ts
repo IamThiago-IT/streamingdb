@@ -9,7 +9,7 @@ const bf = (domain: string) =>
   `https://cdn.brandfetch.io/domain/${domain}/w/128/h/128/icon?c=1bxid64Mup7aczewSAYMX`;
 
 const platformsData = [
-  { name: "Looke", slug: "looke", color: "#6B3FA0", logo: bf("looke.com.br"), website: "https://looke.com.br" },
+  { name: "Looke", slug: "looke", color: "#0029C6", logo: bf("looke.com.br"), website: "https://looke.com.br" },
   { name: "Prime Video", slug: "prime-video", color: "#00A8E1", logo: bf("primevideo.com"), website: "https://primevideo.com" },
   { name: "Crunchyroll", slug: "crunchyroll", color: "#F47521", logo: bf("crunchyroll.com"), website: "https://crunchyroll.com" },
   { name: "Netflix", slug: "netflix", color: "#E50914", logo: bf("netflix.com"), website: "https://netflix.com" },
@@ -46,9 +46,9 @@ const plansData: Record<string, PlanSeed[]> = {
     { name: "Plano Ultimate Fan", tierKey: "ultimate-fan", price: 44.90, quality: "4K HDR", ads: false },
   ],
   "netflix": [
-    { name: "Padrão com Anúncios", tierKey: "com-anuncios", price: 20.90, quality: "HD", ads: true },
-    { name: "Padrão", tierKey: "padrao", price: 44.90, quality: "HD", ads: false },
-    { name: "Premium", tierKey: "premium", price: 59.90, quality: "4K HDR", ads: false },
+    { name: "Padrão com Anúncios", tierKey: "com-anuncios", price: 25.90, quality: "HD", ads: true },
+    { name: "Padrão", tierKey: "padrao", price: 51.90, quality: "HD", ads: false },
+    { name: "Premium", tierKey: "premium", price: 71.90, quality: "4K HDR", ads: false },
   ],
   "globoplay": [
     { name: "Padrão com Anúncios", tierKey: "com-anuncios", price: 22.90, quality: "HD", ads: true },
@@ -57,12 +57,12 @@ const plansData: Record<string, PlanSeed[]> = {
   ],
   "youtube-premium": [
     { name: "Plano Individual", tierKey: "individual", price: 26.90, quality: "4K", ads: false },
-    { name: "Plano Familiar", tierKey: "familiar", price: 44.90, quality: "4K", ads: false },
+    { name: "Plano Familiar", tierKey: "familiar", price: 53.90, quality: "4K", ads: false },
   ],
   "disney-plus": [
-    { name: "Padrão com Anúncios", tierKey: "com-anuncios", price: 27.99, quality: "HD", ads: true },
-    { name: "Padrão", tierKey: "padrao", price: 43.99, quality: "HD", ads: false },
-    { name: "Premium", tierKey: "premium", price: 62.99, quality: "4K HDR", ads: false },
+    { name: "Padrão com Anúncios", tierKey: "com-anuncios", price: 29.90, quality: "HD", ads: true },
+    { name: "Padrão", tierKey: "padrao", price: 49.90, quality: "HD", ads: false },
+    { name: "Premium", tierKey: "premium", price: 69.90, quality: "4K HDR", ads: false },
   ],
   "hbo-max": [
     { name: "Básico com Anúncios", tierKey: "basico-com-anuncios", price: 29.90, quality: "HD", ads: true },
@@ -70,7 +70,7 @@ const plansData: Record<string, PlanSeed[]> = {
     { name: "Platimum", tierKey: "platinum", price: 49.90, quality: "4K HDR", ads: false },
   ],
   "apple-tv-plus": [
-    { name: "Plano Mensal", tierKey: "mensal", price: 29.90, quality: "4K HDR", ads: false },
+    { name: "Plano Mensal", tierKey: "mensal", price: 34.90, quality: "4K HDR", ads: false },
   ],
   "paramount-plus": [
     { name: "Plano Padrão", tierKey: "padrao", price: 34.90, quality: "HD", ads: false },
@@ -172,7 +172,9 @@ async function seedPlan(platformId: string, platformWebsite: string | null, plan
   const billingCycle = planData.billingCycle ?? "MONTHLY";
   const billingMonths = billingCycle === "ANNUAL" ? 12 : 1;
 
-  const offer = await prisma.planOffer.upsert({
+  // O seed apenas cria a oferta inicial. Preços verificados depois vêm do
+  // importador/coletor e não podem ser sobrescritos por uma nova execução.
+  const existingOffer = await prisma.planOffer.findUnique({
     where: {
       planId_countryCode_billingCycle: {
         planId: plan.id,
@@ -180,21 +182,12 @@ async function seedPlan(platformId: string, platformWebsite: string | null, plan
         billingCycle,
       },
     },
-    update: {
-      currency: "BRL",
-      amount: planData.price,
-      billingMonths,
-      taxIncluded: true,
-      displayName: planData.name,
-      quality: planData.quality ?? null,
-      ads: planData.ads,
-      sourceUrl: platformWebsite,
-      sourceType: "SEED",
-      status: "ACTIVE",
-      lastCheckedAt: new Date(),
-      lastSuccessAt: new Date(),
-    },
-    create: {
+  });
+
+  if (existingOffer) return;
+
+  const offer = await prisma.planOffer.create({
+    data: {
       planId: plan.id,
       countryCode: "BR",
       currency: "BRL",

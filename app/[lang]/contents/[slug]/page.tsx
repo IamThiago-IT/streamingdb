@@ -47,7 +47,12 @@ export default async function ContentDetail({
                 className="flex min-w-0 items-center justify-between rounded-md border border-line bg-surface p-4 transition-colors hover:border-line-strong"
               >
                 <div className="flex min-w-0 items-center gap-3">
-                  <PlatformLogo platform={a.platform} size="md" />
+                  <PlatformLogo
+                    name={a.platform.name}
+                    logo={a.platform.logo}
+                    color={a.platform.color}
+                    size="md"
+                  />
                   <span className="truncate font-medium text-ink">{a.platform.name}</span>
                 </div>
                 <span className="font-mono text-xs tnum text-ink-faint">

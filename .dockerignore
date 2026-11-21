@@ -18,3 +18,14 @@ coverage
 .turbo
 pnpm-debug.log
 .pnpm-store
+
+# Documentação e artefatos locais
+docs
+data
+*.md
+*.db
+.neon
+.token-optimizer
+tsconfig.tsbuildinfo
+pnpm-*.log
+pnpm-*.err

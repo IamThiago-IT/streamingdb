@@ -1,219 +1,115 @@
 # StreamingDB
 
-Uma aplicação web moderna para gerenciar e visualizar dados em tempo real, construída com as tecnologias mais recentes do ecossistema JavaScript/TypeScript.
+Aplicação web para acompanhar **preços, catálogos e mudanças** das plataformas
+de streaming. Os preços são nativos por país — sem conversão cambial — e cada
+oferta guarda moeda, ciclo de cobrança, histórico e fonte da verificação.
 
-## 🚀 Tecnologias
+## O que tem
 
-- **Next.js 16.2** - Framework React com SSR/SSG
-- **React 19** - Biblioteca UI moderna
-- **TypeScript 5** - Type safety para JavaScript
-- **Prisma** - ORM type-safe para bancos de dados
-- **PostgreSQL** - Banco de dados relacional
-- **Tailwind CSS 4** - Utility-first CSS framework
-- **ESLint 9** - Linter para qualidade de código
+- Comparativo de preços por país, com filtros de planos com/sem anúncios.
+- Páginas de plataforma com planos, catálogo e histórico de preços.
+- Catálogo de filmes e séries com disponibilidade por plataforma.
+- Log de mudanças (preço, catálogo e planos) com filtro por tipo.
+- Comparador de até três plataformas.
+- Login com email/senha e, opcionalmente, Google e GitHub.
+- Interface em **português (pt-BR)** e **inglês (en)**.
+- Coleta de preços por CSV, scraper e monitor de variações.
 
-## 📋 Pré-requisitos
+## Stack
 
-- Node.js 18+ 
-- pnpm (recomendado) ou npm
-- PostgreSQL 12+ (ou Docker para usar containerização)
+- [Next.js 16](https://nextjs.org/) (App Router, Turbopack) + React 19
+- TypeScript 5 e Tailwind CSS 4
+- [Prisma 7](https://www.prisma.io/) com driver adapters (Postgres/Neon ou SQLite)
+- [Better Auth](https://www.better-auth.com/) com adapter Prisma
+- Recharts, Cheerio, Vercel Analytics
 
-## 🐳 Docker (Recomendado)
+## Começando
 
-### Com Docker Compose
+Pré-requisitos: **Node.js 20+** e **pnpm**.
 
-A forma mais fácil de executar o projeto é com Docker Compose, que gerencia tanto o banco de dados quanto a aplicação:
-
-1. Certifique-se de ter [Docker](https://www.docker.com/get-started) e [Docker Compose](https://docs.docker.com/compose/install/) instalados.
-
-2. Clone o repositório:
-```bash
-git clone <seu-repositorio>
-cd streamingdb
-```
-
-3. Copie o arquivo de ambiente:
-```bash
-cp .env.example .env.local
-```
-
-4. Inicie os serviços com Docker Compose:
-```bash
-docker-compose up -d
-```
-
-5. A aplicação estará disponível em [http://localhost:3000](http://localhost:3000)
-
-### Comandos Docker Úteis
-
-```bash
-# Ver logs da aplicação
-docker-compose logs -f app
-
-# Acessar shell da aplicação
-docker-compose exec app sh
-
-# Acessar console do Prisma Studio
-docker-compose exec app pnpm prisma studio
-
-# Parar os serviços
-docker-compose down
-
-# Parar e remover volumes (limpar tudo)
-docker-compose down -v
-
-# Rebuild das imagens
-docker-compose build --no-cache
-```
-
-### Variáveis de Ambiente (Docker)
-
-Edite o arquivo `.env.local` para customizar:
-
-```bash
-POSTGRES_USER=streamingdb_user
-POSTGRES_PASSWORD=streamingdb_password
-POSTGRES_DB=streamingdb
-NODE_ENV=production
-NEXT_PUBLIC_API_URL=http://localhost:3000
-```
-
-## 🔧 Instalação (Sem Docker)
-
-1. Clone o repositório:
-```bash
-git clone <seu-repositorio>
-cd streamingdb
-```
-
-2. Instale as dependências:
 ```bash
 pnpm install
-```
-
-3. Configure as variáveis de ambiente:
-```bash
 cp .env.example .env.local
-```
-
-4. Configure a variável `DATABASE_URL` no arquivo `.env.local`:
-```
-DATABASE_URL="postgresql://usuario:senha@localhost:5432/streamingdb"
-```
-
-5. Execute as migrações do Prisma:
-```bash
-pnpm prisma migrate dev
-```
-
-## 🚀 Desenvolvimento
-
-Inicie o servidor de desenvolvimento:
-
-```bash
+pnpm db:push      # SQLite local: cria o schema a partir do Prisma
+pnpm db:seed      # plataformas, planos e catálogo de exemplo
 pnpm dev
 ```
 
-Abra [http://localhost:3000](http://localhost:3000) no navegador para ver o resultado.
+Abra [http://localhost:3000](http://localhost:3000). Para usar Postgres/Neon,
+configure `DATABASE_URL`/`DIRECT_URL` e rode `pnpm db:migrate` em vez de
+`db:push`.
 
-O aplicativo será recarregado automaticamente quando você editar os arquivos.
+> O seed inicial cobre apenas o Brasil. Para adicionar outros países, importe
+> ofertas com `pnpm seed:offers --file=data/offers.csv`.
 
-## 📁 Estrutura do Projeto
+## Documentação
 
-```
-streamingdb/
-├── app/                    # Aplicação Next.js App Router
-│   ├── page.tsx           # Página principal
-│   ├── layout.tsx         # Layout raiz
-│   └── globals.css        # Estilos globais
-├── prisma/                # Configuração e schema do Prisma
-│   └── schema.prisma      # Definição do modelo de dados
-├── public/                # Arquivos estáticos
-├── package.json           # Dependências do projeto
-├── tsconfig.json          # Configuração TypeScript
-├── next.config.ts         # Configuração Next.js
-└── eslint.config.mjs      # Configuração ESLint
-```
+A documentação completa está em [`docs/`](docs/README.md).
 
-## 🔨 Comandos Disponíveis
+| Documento | Conteúdo |
+|---|---|
+| [Começando](docs/getting-started.md) | Instalação, variáveis de ambiente e banco |
+| [Arquitetura](docs/architecture.md) | Estrutura, fluxo de requisição e decisões |
+| [Banco de dados](docs/database.md) | Modelos, relações, migrations e seeds |
+| [Preços e ofertas](docs/pricing.md) | Preço nativo, CSV, scraper e monitor |
+| [API](docs/api.md) | Endpoints HTTP e respostas |
+| [Internacionalização](docs/internationalization.md) | Idiomas, países e moeda |
+| [Autenticação](docs/authentication.md) | Better Auth, provedores e sessão |
+| [Deploy](docs/deployment.md) | Vercel + Neon e operação |
+| [Docker](docs/docker.md) | Compose, imagem e produção |
 
-- `pnpm dev` - Inicia servidor de desenvolvimento
-- `pnpm build` - Compila para produção
-- `pnpm start` - Inicia servidor em produção
-- `pnpm lint` - Executa verificações de linting
-- `pnpm seed:offers --file=...` - Importa ofertas de preço nativo (CSV)
-- `pnpm validate:offers` - Valida cobertura e consistência das ofertas
-- `pnpm prisma studio` - Abre Prisma Studio para gerenciar dados
-
-## 📦 Build para Produção
+## Comandos
 
 ```bash
-pnpm build
-pnpm start
+pnpm dev              # desenvolvimento (Turbopack)
+pnpm build            # generate + migrate deploy + build
+pnpm start            # produção
+pnpm lint             # ESLint
+
+pnpm db:generate      # Prisma Client
+pnpm db:migrate       # migrations (Postgres)
+pnpm db:push          # sincroniza schema (SQLite)
+pnpm db:seed          # seed inicial
+pnpm db:studio        # Prisma Studio
+pnpm db:reset         # reseta o banco (cuidado)
+
+pnpm seed:offers --file=data/offers.csv   # importa ofertas (aceita --dry-run)
+pnpm validate:offers                      # valida cobertura e consistência
+pnpm scrape                               # coleta preços configurados
+pnpm monitor                              # detecta variações de preço
+pnpm seed:content                         # lote extra de catálogo
 ```
 
-## 🗄️ Banco de Dados
+## Estrutura
 
-O projeto usa Prisma como ORM. Para gerenciar o banco de dados:
-
-```bash
-# Criar nova migração
-pnpm prisma migrate dev --name nome_da_migracao
-
-# Visualizar dados
-pnpm prisma studio
-
-# Resetar banco (cuidado!)
-pnpm prisma migrate reset
+```text
+app/[lang]/      páginas por idioma (home, plataformas, catálogo, mudanças)
+app/api/         route handlers (plataformas, planos, conteúdo, busca, auth)
+components/      UI, preços, gráficos e autenticação
+lib/             queries, Prisma, países, moeda, i18n e auth
+prisma/          schema, migrations e seed
+scripts/         importação, validação, scraper e migração
+data/            CSV de ofertas e formato
+dictionaries/    textos pt-BR e en
+docs/            documentação
 ```
 
-## 🌎 Preços por país
+## Preço nativo
 
-O preço é **nativo por país** — não há conversão cambial. Cada país tem sua
-moeda (`lib/countries.ts`), e a mesma moeda em países diferentes (EUR em `DE` e
-`PT`, por exemplo) representa ofertas distintas.
+`Plan` é o tier canônico da plataforma; `PlanOffer` guarda o preço real por
+**país + ciclo**, com a moeda derivada do país (`lib/countries.ts`). EUR na
+Alemanha e em Portugal são ofertas distintas. O preço de site oficial é a
+referência; App Store/Play entram com `sourceType` próprio. O histórico
+pertence à oferta, não ao plano. Veja [Preços e ofertas](docs/pricing.md).
 
-- O país é escolhido no header; a seleção fica no cookie `sdb_country`.
-- `Plan` é o tier canônico; `PlanOffer` guarda valor, moeda, impostos e ciclo.
-- `PriceHistory` pertence à oferta, não ao plano.
-- Preço de web é a referência; App Store/Play entram com `sourceType` próprio.
+## Deploy
 
-O seed inicial cobre apenas o Brasil. Para adicionar os demais países:
+O caminho recomendado é **Vercel + Neon**; o build executa
+`prisma generate && prisma migrate deploy && next build`. Configure
+`DATABASE_URL` (pooled), `DIRECT_URL` (direta) e `BETTER_AUTH_SECRET`. Passo a
+passo em [Deploy](docs/deployment.md). Para self-hosting, use
+[Docker](docs/docker.md).
 
-```bash
-pnpm seed:offers --file=data/offers.csv --dry-run
-pnpm seed:offers --file=data/offers.csv
-pnpm validate:offers
-```
+## Licença
 
-O formato do CSV e as regras de coleta estão em
-[`data/README.md`](data/README.md).
-
-## 🎨 Estilos
-
-O projeto utiliza Tailwind CSS para estilização. Os estilos globais estão em `app/globals.css`.
-
-## 📝 Licença
-
-MIT
-
-## 👨‍💻 Contribuindo
-
-Sinta-se à vontade para abrir issues e pull requests.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+MIT.

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { headers } from "next/headers";
 import { getDictionary, hasLocale } from "../../dictionaries";
 import {
   getPlatformBySlug,
@@ -10,8 +11,10 @@ import PriceHistoryChart from "@/components/PriceHistoryChart";
 import PriceBadge from "@/components/PriceBadge";
 import Header from "@/components/Header";
 import PlatformLogo from "@/components/PlatformLogo";
+import PlatformBackdrop from "@/components/PlatformBackdrop";
 import { getSelectedCountry } from "@/lib/country";
-import { formatMoney } from "@/lib/money";
+import { formatMoney, monthlyAmount } from "@/lib/money";
+import { auth } from "@/lib/auth";
 import {
   getCountryCurrency,
   getCountryName,
@@ -50,6 +53,19 @@ export default async function PlatformDetail({
 
   if (!platform || !platformWithHistory) notFound();
 
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+  const isLoggedIn = !!session;
+
+  const offers = platform.plans.flatMap((plan) => plan.offers);
+  const bestOffer = [...offers]
+    .sort(
+      (a, b) =>
+        monthlyAmount(a.amount, a.billingMonths) -
+        monthlyAmount(b.amount, b.billingMonths)
+    )[0];
+
   const planPrices = await getPlanPricesAtDates(platform.id, country);
   const priceByOffer = new Map(
     planPrices.map((price) => [price.offerId, price])
@@ -74,12 +90,18 @@ export default async function PlatformDetail({
   const availabilityStatus = platform.platformCountries[0]?.status;
 
   return (
-    <div className="min-h-screen bg-paper">
+    <div className="relative isolate min-h-screen bg-paper">
+      <PlatformBackdrop color={platform.color} />
       <Header lang={lang} title={dict.home.title} />
 
       <main className="mx-auto max-w-4xl px-4 py-12">
         <div className="mb-2 flex items-center gap-3">
-          <PlatformLogo platform={platform} size="lg" />
+          <PlatformLogo
+            name={platform.name}
+            logo={platform.logo}
+            color={platform.color}
+            size="lg"
+          />
           <h1 className="text-3xl text-ink">{platform.name}</h1>
         </div>
         <p className="mb-8 font-mono text-[11px] uppercase tracking-[0.14em] text-ink-faint">
@@ -128,6 +150,11 @@ export default async function PlatformDetail({
                           <h3 className="font-medium text-ink">
                             {offer.displayName ?? plan.name}
                           </h3>
+                          {bestOffer && offer.id === bestOffer.id && (
+                            <span className="rounded-sm bg-fall-soft px-2 py-0.5 font-mono text-[11px] font-medium tnum text-fall">
+                              {dict.platform.bestPrice}
+                            </span>
+                          )}
                           {previousPrice !== undefined && (
                             <PriceBadge
                               current={Number(latestPrice)}
@@ -189,6 +216,23 @@ export default async function PlatformDetail({
                             </span>
                           </div>
                         )}
+                      </div>
+                    )}
+
+                    {(offer.status === "ACTIVE" || offer.status === "STALE") && (
+                      <div className="mt-4 flex items-center justify-end border-t border-line pt-4">
+                        <Link
+                          href={
+                            isLoggedIn
+                              ? offer.sourceUrl ?? `/${lang}/platforms/${slug}`
+                              : `/${lang}/login`
+                          }
+                          className="inline-flex items-center justify-center rounded bg-accent px-4 py-2 text-sm font-medium text-on-accent transition-colors hover:bg-accent-hover"
+                        >
+                          {isLoggedIn
+                            ? dict.platform.subscribe
+                            : dict.platform.signInToSubscribe}
+                        </Link>
                       </div>
                     )}
                   </div>

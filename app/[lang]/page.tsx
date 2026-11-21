@@ -148,7 +148,12 @@ export default async function Home({
                       className="-mx-2 flex min-w-0 items-center justify-between rounded-sm px-2 py-1.5 text-sm transition-colors hover:bg-surface-2"
                     >
                       <div className="flex min-w-0 items-center gap-2">
-                        <PlatformLogo platform={offer.plan.platform} size="sm" />
+                        <PlatformLogo
+                          name={offer.plan.platform.name}
+                          logo={offer.plan.platform.logo}
+                          color={offer.plan.platform.color}
+                          size="sm"
+                        />
                         <span className="truncate text-ink">{offer.plan.platform.name}</span>
                         <span className="hidden truncate text-ink-faint sm:inline">· {offer.displayName ?? offer.plan.name}</span>
                       </div>
@@ -179,7 +184,12 @@ export default async function Home({
                       className="-mx-2 flex min-w-0 items-center justify-between rounded-sm px-2 py-1.5 text-sm transition-colors hover:bg-surface-2"
                     >
                       <div className="flex min-w-0 items-center gap-2">
-                        <PlatformLogo platform={offer.plan.platform} size="sm" />
+                        <PlatformLogo
+                          name={offer.plan.platform.name}
+                          logo={offer.plan.platform.logo}
+                          color={offer.plan.platform.color}
+                          size="sm"
+                        />
                         <span className="truncate text-ink">{offer.plan.platform.name}</span>
                         <span className="hidden truncate text-ink-faint sm:inline">· {offer.displayName ?? offer.plan.name}</span>
                       </div>
@@ -228,7 +238,12 @@ export default async function Home({
                 >
                   <div className="flex min-w-0 items-center justify-between gap-2">
                     <div className="flex min-w-0 items-center gap-3">
-                      <PlatformLogo platform={p} size="md" />
+                      <PlatformLogo
+                        name={p.name}
+                        logo={p.logo}
+                        color={p.color}
+                        size="md"
+                      />
                       <span className="min-w-0 text-[13px] font-medium leading-tight text-ink sm:text-sm">
                         {p.name}
                       </span>

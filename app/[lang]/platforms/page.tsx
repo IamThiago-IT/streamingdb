@@ -79,7 +79,12 @@ export default async function PlatformsPage({
                         href={`/${lang}/platforms/${platform.slug}`}
                         className="flex items-center gap-3 font-medium text-ink"
                       >
-                        <PlatformLogo platform={platform} size="md" />
+                        <PlatformLogo
+                          name={platform.name}
+                          logo={platform.logo}
+                          color={platform.color}
+                          size="md"
+                        />
                         {platform.name}
                       </Link>
                     </td>

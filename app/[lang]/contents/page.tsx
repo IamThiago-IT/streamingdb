@@ -103,7 +103,12 @@ export default async function ContentsPage({
                         backgroundColor: (a.platform.color ?? "#666") + "18",
                       }}
                     >
-                      <PlatformLogo platform={a.platform} size="sm" />
+                      <PlatformLogo
+                        name={a.platform.name}
+                        logo={a.platform.logo}
+                        color={a.platform.color}
+                        size="sm"
+                      />
                       {a.platform.name}
                     </span>
                   ))}

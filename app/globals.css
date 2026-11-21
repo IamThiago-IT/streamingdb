@@ -39,6 +39,11 @@
   --chart-4: #8a4a6e;
   --chart-5: #5c6b3c;
   --chart-6: #5b6773;
+
+  /* Halo temático de plataforma (canais definidos em runtime). */
+  --platform-glow-alpha: 0.28;
+  --platform-wash-alpha: 0.06;
+  --platform-base-alpha: 0.025;
 }
 
 :root.dark {
@@ -73,6 +78,10 @@
   --chart-4: #c48aa8;
   --chart-5: #9baa6b;
   --chart-6: #8fa0ad;
+
+  --platform-glow-alpha: 0.32;
+  --platform-wash-alpha: 0.1;
+  --platform-base-alpha: 0.04;
 }
 
 @theme inline {
@@ -142,4 +151,23 @@
 .tnum {
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum";
+}
+
+/* -------------------------------------------------------------------------
+   Fundo de plataforma
+   Halo derivado da cor da marca, em baixa opacidade e preso a uma faixa de
+   luminosidade média: cria imersão sem competir com o logo.
+   ------------------------------------------------------------------------- */
+.platform-backdrop {
+  background:
+    radial-gradient(
+      64rem 34rem at 50% -9rem,
+      rgb(var(--platform-rgb) / var(--platform-glow-alpha)),
+      transparent 78%
+    ),
+    linear-gradient(
+      to bottom,
+      rgb(var(--platform-rgb) / var(--platform-wash-alpha)),
+      rgb(var(--platform-rgb) / var(--platform-base-alpha))
+    );
 }

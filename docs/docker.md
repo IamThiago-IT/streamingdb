@@ -1,336 +1,225 @@
-# 🐳 Guia Docker do StreamingDB
+# Docker
 
-Este documento detalha como usar Docker para desenvolvimento, testes e produção do StreamingDB.
+Este guia cobre o uso de Docker para desenvolvimento e produção do StreamingDB.
+A configuração é composta por `Dockerfile` (multi-stage) e `docker-compose.yml`
+(Postgres + aplicação).
 
-## Conteúdo
+## Início rápido
 
-1. [Início Rápido](#início-rápido)
-2. [Estrutura Docker](#estrutura-docker)
-3. [Desenvolvimento com Docker](#desenvolvimento-com-docker)
-4. [Produção](#produção)
-5. [Troubleshooting](#troubleshooting)
-
----
-
-## Início Rápido
-
-### Executar a Aplicação Completa
+1. Instale [Docker](https://www.docker.com/get-started) e Docker Compose.
+2. Crie o arquivo de variáveis que o Compose lê (`.env`, não `.env.local`):
 
 ```bash
-# Clonar repositório
-git clone <seu-repositorio>
-cd streamingdb
-
-# Copiar variáveis de ambiente
-cp .env.example .env.local
-
-# Iniciar serviços (banco de dados + aplicação)
-docker-compose up -d
-
-# Verificar status
-docker-compose ps
-
-# Ver logs
-docker-compose logs -f
+cp .env.example .env
 ```
 
-A aplicação estará disponível em: **http://localhost:3000**
-
----
-
-## Estrutura Docker
-
-### Serviços no `docker-compose.yml`
-
-#### 1. **PostgreSQL (Banco de Dados)**
-- **Imagem**: `postgres:16-alpine`
-- **Porta**: `5432`
-- **Variáveis de ambiente**:
-  - `POSTGRES_USER`: Nome do usuário (padrão: `streamingdb_user`)
-  - `POSTGRES_PASSWORD`: Senha (padrão: `streamingdb_password`)
-  - `POSTGRES_DB`: Nome do banco (padrão: `streamingdb`)
-- **Volume**: `postgres_data` (persiste dados mesmo após parar o container)
-
-#### 2. **Next.js App**
-- **Imagem**: Construída a partir do `Dockerfile`
-- **Porta**: `3000`
-- **Dependências**: Aguarda banco de dados estar pronto
-- **Network**: Conectado à `streamingdb-network` para comunicação com o BD
-
-### Dockerfile (Multi-stage)
-
-O `Dockerfile` usa duas etapas para otimizar o tamanho da imagem:
-
-**Etapa 1 (Builder)**:
-- Instala dependências
-- Compila a aplicação Next.js
-- Gera Prisma Client
-
-**Etapa 2 (Runtime)**:
-- Base limpa com apenas dependências de produção
-- Copia apenas arquivos necessários
-- Reduz tamanho da imagem final
-
----
-
-## Desenvolvimento com Docker
-
-### Execução Básica
+3. Edite `.env` e defina um `BETTER_AUTH_SECRET` real:
 
 ```bash
-# Iniciar em modo anexado (veja logs em tempo real)
-docker-compose up
-
-# Iniciar em background
-docker-compose up -d
+npx @better-auth/cli secret
 ```
 
-### Acessar o Console da Aplicação
+4. Suba os serviços:
 
 ```bash
-docker-compose exec app sh
+docker compose up -d --build
 ```
 
-Dentro do container, você pode executar:
+5. Acompanhe o start (o container aplica migrations antes de subir):
 
 ```bash
-# Prisma Studio (UI para gerenciar banco de dados)
-pnpm prisma studio
-
-# Migrations
-pnpm prisma migrate dev --name <nome>
-pnpm prisma db seed
-
-# Lint
-pnpm lint
-
-# Build
-pnpm build
+docker compose ps
+docker compose logs -f app
 ```
 
-### Monitorar Logs
+6. Acesse `http://localhost:3000`. O health check fica em
+   `http://localhost:3000/api/health`.
+
+## Serviços
+
+### `db` — PostgreSQL 16
+
+- Imagem `postgres:16-alpine`.
+- Porta `5432` publicada no host.
+- Credenciais padrão: `streamingdb_user` / `streamingdb_password` /
+  `streamingdb` (sobrescreva via `POSTGRES_*`).
+- Volume `postgres_data` persiste os dados entre reinícios.
+- Health check com `pg_isready`; a aplicação só sobe quando o banco está
+  saudável.
+
+### `app` — Next.js
+
+- Build a partir do `Dockerfile`.
+- Exposta na porta `3000`.
+- `DATABASE_URL` é montada automaticamente a partir de `POSTGRES_*`, apontando
+  para o host `db`. Para usar outro Postgres, defina `DOCKER_DATABASE_URL`.
+- Recebe `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL` e as credenciais sociais do
+  `.env`.
+- `restart: unless-stopped`.
+
+## Como a imagem é construída
+
+**Estágio `builder`:**
+
+1. Instala pnpm e as dependências com lockfile congelado.
+2. Define `NEXT_OUTPUT=standalone`.
+3. Roda `prisma generate` e `next build`.
+4. Gera `.next/standalone` com apenas o necessário para produção.
+
+**Estágio de runtime:**
+
+1. Copia `public/`, `.next/standalone`, `.next/static`, `node_modules`,
+   `package.json`, `prisma/` e `prisma.config.ts`.
+2. Define `PORT=3000` e `HOSTNAME=0.0.0.0`.
+3. No start: `pnpm prisma migrate deploy && node server.js`.
+4. Health check HTTP em `/api/health`.
+
+> As migrations rodam **no start**, não no build. O build da imagem não precisa
+> de acesso ao banco.
+
+## Primeiro uso do banco
+
+O container aplica as migrations, mas não roda seed automaticamente. Com o
+Postgres publicado na porta `5432`, rode a partir da máquina host:
 
 ```bash
-# Todos os serviços
-docker-compose logs -f
-
-# Apenas a aplicação
-docker-compose logs -f app
-
-# Apenas o banco de dados
-docker-compose logs -f db
-
-# Últimas 100 linhas
-docker-compose logs --tail=100
+# PowerShell
+$env:DATABASE_URL="postgresql://streamingdb_user:streamingdb_password@localhost:5432/streamingdb"
+$env:DIRECT_URL=$env:DATABASE_URL
+pnpm db:seed
+pnpm seed:offers --file=data/offers.csv
 ```
 
-### Gerenciar Containers
-
 ```bash
-# Listar containers em execução
-docker-compose ps
-
-# Parar serviços
-docker-compose stop
-
-# Iniciar serviços parados
-docker-compose start
-
-# Reiniciar serviços
-docker-compose restart
-
-# Remover containers e volumes
-docker-compose down -v
+# bash/zsh
+DATABASE_URL="postgresql://streamingdb_user:streamingdb_password@localhost:5432/streamingdb" \
+DIRECT_URL="postgresql://streamingdb_user:streamingdb_password@localhost:5432/streamingdb" \
+pnpm db:seed
 ```
 
-### Resetar Banco de Dados
+> Os scripts não são copiados para a imagem de runtime (apenas o servidor
+> standalone). Use o host para seed, importação e Prisma Studio.
 
-Para limpar completamente o banco de dados e começar do zero:
-
-```bash
-# Remove containers e volumes
-docker-compose down -v
-
-# Recria e inicia
-docker-compose up -d
-```
-
-### Rebuild da Imagem
-
-Quando alterar dependências ou configuração:
+## Comandos úteis
 
 ```bash
+# Logs
+docker compose logs -f
+docker compose logs -f app
+docker compose logs -f db
+
+# Status
+docker compose ps
+
+# Shell no container
+docker compose exec app sh
+
+# Parar / iniciar / reiniciar
+docker compose stop
+docker compose start
+docker compose restart
+
+# Remover containers e volumes (apaga o banco)
+docker compose down -v
+
 # Rebuild sem cache
-docker-compose build --no-cache
+docker compose build --no-cache
+docker compose up -d
 
-# Restart com nova imagem
-docker-compose up -d
+# Prisma Studio a partir do host
+pnpm db:studio
 ```
 
----
+## Variáveis do `.env`
+
+| Variável | Padrão | Uso |
+|---|---|---|
+| `POSTGRES_USER` | `streamingdb_user` | Usuário do banco local. |
+| `POSTGRES_PASSWORD` | `streamingdb_password` | Senha do banco local. |
+| `POSTGRES_DB` | `streamingdb` | Nome do banco. |
+| `DOCKER_DATABASE_URL` | — | Sobrescreve a URL do banco usada pelo container (ex.: Postgres externo). |
+| `BETTER_AUTH_SECRET` | — | **Obrigatória em produção.** |
+| `BETTER_AUTH_URL` | `http://localhost:3000` | URL pública. |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | vazio | Habilita login Google. |
+| `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | vazio | Habilita login GitHub. |
+| `NODE_ENV` | `production` | Ambiente do container. |
+
+> `DATABASE_URL` no `.env` serve ao desenvolvimento local; o Compose monta a URL
+> do container a partir de `POSTGRES_*`. Para apontar a outro banco, use
+> `DOCKER_DATABASE_URL`.
 
 ## Produção
 
-### Build da Imagem Customizada
+- Não use as senhas padrão do Compose; defina `POSTGRES_PASSWORD` forte.
+- A porta `5432` está publicada para facilitar o desenvolvimento. Em produção,
+  remova o mapeamento ou restrinja o acesso.
+- Sirva a aplicação atrás de HTTPS (proxy reverso ou plataforma gerenciada) e
+  ajuste `BETTER_AUTH_URL`.
+- Faça backup do volume (`postgres_data`) ou use um Postgres gerenciado.
+- O health check pode ser usado por orquestradores:
 
 ```bash
-# Build com tag customizada
 docker build -t streamingdb:latest .
-
-# Build com variantes
-docker build -t streamingdb:v1.0.0 .
-```
-
-### Executar Container Isolado
-
-```bash
-# Com postgres local
 docker run -d \
   -p 3000:3000 \
   -e DATABASE_URL="postgresql://user:pass@host:5432/db" \
-  -e NODE_ENV=production \
+  -e BETTER_AUTH_SECRET="..." \
+  -e BETTER_AUTH_URL="https://seu-dominio" \
   --name streamingdb-app \
   streamingdb:latest
 ```
 
-### Docker Registry (Push para Hub)
-
-```bash
-# Tag para registry
-docker tag streamingdb:latest seu-usuario/streamingdb:latest
-
-# Fazer login
-docker login
-
-# Push
-docker push seu-usuario/streamingdb:latest
-```
-
-### Deployment Stack Completo
-
-Para ambientes de produção com múltiplas réplicas:
-
-```bash
-# Docker Swarm
-docker swarm init
-docker stack deploy -c docker-compose.yml streamingdb
-
-# Kubernetes (usando manifesto)
-kubectl apply -f k8s/
-```
-
----
-
 ## Troubleshooting
 
-### Container Não Inicia
+### Container da aplicação reinicia
 
 ```bash
-# Verificar logs de erro
-docker-compose logs app
-
-# Verificar health check
-docker-compose ps
-
-# Rebuild completo
-docker-compose down -v
-docker-compose build --no-cache
-docker-compose up -d
+docker compose logs app
 ```
 
-### Conexão Recusada ao Banco de Dados
+Verifique `DATABASE_URL`, `BETTER_AUTH_SECRET` e se o banco está saudável.
+
+### Banco não fica pronto
 
 ```bash
-# Verificar se banco de dados está saudável
-docker-compose exec db pg_isready -U streamingdb_user
-
-# Verificar logs do database
-docker-compose logs db
-
-# Aguardar banco de dados iniciar e fazer restart da app
-docker-compose restart app
+docker compose exec db pg_isready -U streamingdb_user
+docker compose logs db
 ```
 
-### Porta já em uso
+### Porta em uso
+
+Altere o mapeamento em `docker-compose.yml`:
+
+```yaml
+ports:
+  - "3001:3000"
+```
+
+E ajuste `BETTER_AUTH_URL`/callback OAuth para a nova URL.
+
+### Reset completo do banco
 
 ```bash
-# Mudar porta no docker-compose.yml
-# Alterar:
-# ports:
-#   - "3000:3000"  
-# Para:
-#   - "3001:3000"
-
-# Ou encontrar processo na porta
-lsof -i :3000
-kill -9 <PID>
+docker compose down -v
+docker compose up -d --build
 ```
 
-### Problemas com Volume de Dados
+### Build falha em `next build`
+
+- Confirme que `NEXT_OUTPUT=standalone` está definido no estágio `builder`.
+- Verifique se o código compila com `pnpm build` localmente (com Postgres).
+- Rode `docker compose build --no-cache`.
+
+### Login social não aparece
+
+As credenciais precisam estar no `.env` **antes** de criar o container:
 
 ```bash
-# Listar volumes
-docker volume ls
-
-# Inspecionar volume
-docker volume inspect streamingdb_postgres_data
-
-# Remover volume
-docker volume rm streamingdb_postgres_data
+docker compose up -d --force-recreate
 ```
 
-### Cache de Dependências Desatualizado
+## Referências
 
-```bash
-# Limpar buildkit cache
-docker buildx prune -a
-
-# Rebuild sem cache
-docker-compose build --no-cache --pull
-```
-
-### Problemas de Permissão
-
-Se encontrar problemas de permissão em volumes:
-
-```bash
-# No docker-compose.yml, adicione ao serviço 'app':
-# user: "node"
-# ou
-# user: "1000:1000"  # UID:GID do seu usuário
-```
-
----
-
-## Variáveis de Ambiente
-
-Crie um arquivo `.env.local` baseado em `.env.example`:
-
-```bash
-# Banco de Dados
-POSTGRES_USER=streamingdb_user
-POSTGRES_PASSWORD=streamingdb_password
-POSTGRES_DB=streamingdb
-
-# Next.js
-NODE_ENV=production
-NEXT_PUBLIC_API_URL=http://localhost:3000
-
-# Aplicação
-DEBUG=false
-```
-
----
-
-## Recursos Adicionais
-
-- [Documentação Docker Compose](https://docs.docker.com/compose/)
-- [Documentação Docker](https://docs.docker.com/)
-- [Best Practices Node.js em Docker](https://nodejs.org/en/docs/guides/nodejs-docker-webapp/)
-- [PostgreSQL em Docker](https://hub.docker.com/_/postgres)
-
----
-
-## Suporte
-
-Encontrou algum problema? Abra uma issue no repositório!
+- [Docker Compose](https://docs.docker.com/compose/)
+- [PostgreSQL no Docker](https://hub.docker.com/_/postgres)
+- [Next.js self-hosting](https://nextjs.org/docs/app/guides/self-hosting)
