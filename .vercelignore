@@ -1,0 +1,12 @@
+# Credenciais locais nunca vão para a Vercel.
+# Em produção, as variáveis vêm do painel do projeto.
+.env
+.env.*
+!.env.example
+
+# Artefatos locais que não fazem parte do build.
+.vercel
+.next
+node_modules
+*.tsbuildinfo
+dev.db
