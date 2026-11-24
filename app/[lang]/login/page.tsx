@@ -1,7 +1,8 @@
 import Header from "@/components/Header";
 import LoginForm from "@/components/auth/LoginForm";
 import { getEnabledSocialProviders } from "@/lib/auth-providers";
-import { getDictionary, hasLocale, Locale } from "@/lib/dictionaries";
+import { getDictionary, hasLocale } from "@/lib/dictionaries";
+import type { Locale } from "@/lib/locales";
 import { notFound } from "next/navigation";
 
 export default async function LoginPage({

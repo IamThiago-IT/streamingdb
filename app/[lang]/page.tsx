@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getDictionary, hasLocale, Locale } from "@/lib/dictionaries";
+import { getDictionary, hasLocale } from "@/lib/dictionaries";
+import type { Locale } from "@/lib/locales";
 import {
   getDashboardStats,
   getRecentChanges,

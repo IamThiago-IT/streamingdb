@@ -1,7 +1,8 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getDictionary, hasLocale, Locale } from "@/lib/dictionaries";
+import { getDictionary, hasLocale } from "@/lib/dictionaries";
+import type { Locale } from "@/lib/locales";
 import { getPlatforms } from "@/lib/queries";
 import Header from "@/components/Header";
 import PlatformLogo from "@/components/PlatformLogo";

@@ -5,7 +5,8 @@ import { prisma } from "@/lib/db";
 import Header from "@/components/Header";
 import SignOutButton from "@/components/auth/SignOutButton";
 import ChangePasswordForm from "@/components/auth/ChangePasswordForm";
-import { getDictionary, hasLocale, Locale } from "@/lib/dictionaries";
+import { getDictionary, hasLocale } from "@/lib/dictionaries";
+import type { Locale } from "@/lib/locales";
 
 export default async function ProfilePage({
   params,

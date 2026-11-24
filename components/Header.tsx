@@ -2,7 +2,8 @@ import Link from "next/link";
 import HeaderActions from "./HeaderActions";
 import { getSelectedCountry } from "@/lib/country";
 import { getDictionary } from "@/lib/dictionaries";
-import type { Dictionary, Locale } from "@/lib/dictionaries";
+import type { Dictionary } from "@/lib/dictionaries";
+import type { Locale } from "@/lib/locales";
 
 export default async function Header({
   lang,
