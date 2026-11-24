@@ -1,13 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getDictionary, hasLocale } from "../dictionaries";
+import { getDictionary, hasLocale, Locale } from "@/lib/dictionaries";
 import { getRecentChanges } from "@/lib/queries";
 import Header from "@/components/Header";
 import ChangeFilter from "@/components/ChangeFilter";
 import { getSelectedCountry } from "@/lib/country";
 import { getCountryName } from "@/lib/countries";
 
-function ChangeBadge({ type }: { type: string }) {
+function ChangeBadge({ type, label }: { type: string; label: string }) {
   const styles: Record<string, string> = {
     PRICE_CHANGE: "bg-warn-soft text-warn",
     CONTENT_ADDED: "bg-fall-soft text-fall",
@@ -16,21 +16,13 @@ function ChangeBadge({ type }: { type: string }) {
     PLAN_CHANGE: "bg-surface-2 text-ink-muted",
   };
 
-  const labels: Record<string, string> = {
-    PRICE_CHANGE: "Preço",
-    CONTENT_ADDED: "Adicionado",
-    CONTENT_REMOVED: "Removido",
-    NEW_PLATFORM: "Novo",
-    PLAN_CHANGE: "Plano",
-  };
-
   return (
     <span
       className={`inline-flex items-center rounded-sm px-2 py-0.5 font-mono text-[10px] font-medium uppercase tracking-wider ${
         styles[type] ?? "bg-surface-2 text-ink-muted"
       }`}
     >
-      {labels[type] ?? type}
+      {label}
     </span>
   );
 }
@@ -56,12 +48,16 @@ export default async function ChangesPage({
   const sp = await searchParams;
   if (!hasLocale(lang)) notFound();
 
-  const dict = await getDictionary(lang);
+  const dict = await getDictionary(lang as Locale);
   const country = await getSelectedCountry();
   const countryName = getCountryName(country, lang);
   const type = typeof sp.type === "string" ? sp.type : undefined;
   const changes = await getRecentChanges(country, type, 50);
   const grouped = groupByDate(changes, lang);
+  const changeTypes = [
+    { value: "", label: dict.changes.all },
+    ...Object.entries(dict.changes.types).map(([value, label]) => ({ value, label })),
+  ];
 
   return (
     <div className="min-h-screen bg-paper">
@@ -75,7 +71,7 @@ export default async function ChangesPage({
           {dict.country.changesFor} {countryName}
         </p>
 
-        <ChangeFilter lang={lang} />
+        <ChangeFilter lang={lang} types={changeTypes} />
 
         {Object.keys(grouped).length === 0 && (
           <p className="py-12 text-center text-ink-muted">{dict.changes.noChanges}</p>
@@ -91,7 +87,7 @@ export default async function ChangesPage({
                   className="flex min-w-0 items-start gap-3 rounded-md border border-line bg-surface px-4 py-3"
                 >
                   <span className="mt-0.5 flex-shrink-0">
-                    <ChangeBadge type={c.type} />
+                    <ChangeBadge type={c.type} label={dict.changes.types[c.type as keyof typeof dict.changes.types] ?? c.type} />
                   </span>
                   <div className="min-w-0 flex-1">
                     <p className="text-sm leading-snug text-ink-muted">

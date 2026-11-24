@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getDictionary, hasLocale } from "./dictionaries";
+import { getDictionary, hasLocale, Locale } from "@/lib/dictionaries";
 import {
   getDashboardStats,
   getRecentChanges,
@@ -59,7 +59,7 @@ export default async function Home({
   const { lang } = await params;
   if (!hasLocale(lang)) notFound();
 
-  const dict = await getDictionary(lang);
+  const dict = await getDictionary(lang as Locale);
   const country = await getSelectedCountry();
   const countryName = getCountryName(country, lang);
   const priceGlyph = currencySymbol(getCountryCurrency(country), lang);
@@ -130,7 +130,7 @@ export default async function Home({
         {comparison.cheapest.length > 0 && (
           <section className="mb-12">
             <div className="mb-4 flex items-end justify-between">
-              <h2 className="text-2xl text-ink">Comparação de preços</h2>
+              <h2 className="text-2xl text-ink">{dict.compare.priceComparison}</h2>
               <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-ink-faint">
                 {dict.pricing.monthly}
               </span>
@@ -138,7 +138,7 @@ export default async function Home({
             <div className="grid gap-4 md:grid-cols-2">
               <div className="rounded-md border border-line bg-surface p-5">
                 <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-ink-faint">
-                  Planos mais baratos
+                  {dict.compare.cheapestPlans}
                 </h3>
                 <div className="space-y-1">
                   {comparison.cheapest.map((offer) => (
@@ -174,7 +174,7 @@ export default async function Home({
 
               <div className="rounded-md border border-line bg-surface p-5">
                 <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-ink-faint">
-                  Sem anúncios (mais baratos)
+                  {dict.compare.cheapestNoAds}
                 </h3>
                 <div className="space-y-1">
                   {comparison.cheapestNoAds.map((offer) => (
@@ -218,7 +218,7 @@ export default async function Home({
               href={`/${lang}/platforms`}
               className="text-sm font-medium text-accent transition-colors hover:text-accent-hover"
             >
-              Ver todas →
+              {dict.nav.seeAll} →
             </Link>
           </div>
           <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
@@ -279,7 +279,7 @@ export default async function Home({
               href={`/${lang}/changes`}
               className="text-sm font-medium text-accent transition-colors hover:text-accent-hover"
             >
-              Ver todas →
+              {dict.nav.seeAll} →
             </Link>
           </div>
           <div className="grid gap-2">

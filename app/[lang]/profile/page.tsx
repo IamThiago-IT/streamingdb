@@ -5,13 +5,15 @@ import { prisma } from "@/lib/db";
 import Header from "@/components/Header";
 import SignOutButton from "@/components/auth/SignOutButton";
 import ChangePasswordForm from "@/components/auth/ChangePasswordForm";
-import { hasLocale } from "../dictionaries";
+import { getDictionary, hasLocale, Locale } from "@/lib/dictionaries";
 
 export default async function ProfilePage({
   params,
 }: PageProps<"/[lang]">) {
   const { lang } = await params;
   if (!hasLocale(lang)) notFound();
+
+  const dict = await getDictionary(lang as Locale);
 
   // Validação real da sessão no servidor (o proxy só faz checagem otimística).
   const session = await auth.api.getSession({
@@ -28,12 +30,12 @@ export default async function ProfilePage({
 
   return (
     <div className="min-h-screen bg-paper">
-      <Header lang={lang} title="StreamingDB" />
+      <Header lang={lang} title={dict.home.title} />
 
       <main className="mx-auto max-w-sm space-y-6 px-4 py-24">
         <div className="rounded-md border border-line bg-surface p-8">
           <h1 className="mb-6 text-center text-2xl text-ink">
-            Minha conta
+            {dict.auth.profileTitle}
           </h1>
 
           <div className="flex items-center gap-3">
@@ -43,8 +45,7 @@ export default async function ProfilePage({
                 src={user.image}
                 alt=""
                 className="h-10 w-10 rounded-full"
-              />
-            ) : (
+              />) : (
               <span className="flex h-10 w-10 items-center justify-center rounded-full bg-accent font-mono text-sm font-medium text-on-accent">
                 {(user.name ?? user.email)[0].toUpperCase()}
               </span>
@@ -58,7 +59,11 @@ export default async function ProfilePage({
           </div>
 
           <div className="mt-6 flex justify-end">
-            <SignOutButton lang={lang} />
+            <SignOutButton
+              lang={lang}
+              logoutLabel={dict.auth.logout}
+              logoutPending={dict.auth.logoutPending}
+            />
           </div>
         </div>
 
@@ -71,7 +76,7 @@ export default async function ProfilePage({
               ? "Você entrou com email e senha."
               : "Sua conta foi criada via Google/GitHub. Defina uma senha para também entrar com email."}
           </p>
-          <ChangePasswordForm mode={hasPassword ? "change" : "set"} />
+          <ChangePasswordForm mode={hasPassword ? "change" : "set"} strings={dict.auth} />
         </div>
       </main>
     </div>

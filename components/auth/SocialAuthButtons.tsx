@@ -12,9 +12,13 @@ const labels: Record<SocialProvider, string> = {
 export default function SocialAuthButtons({
   providers,
   callbackURL,
+  socialDivider,
+  socialError,
 }: {
   providers: SocialProvider[];
   callbackURL: string;
+  socialDivider: string;
+  socialError: string;
 }) {
   const [error, setError] = useState("");
   const [pending, setPending] = useState<SocialProvider | null>(null);
@@ -29,7 +33,7 @@ export default function SocialAuthButtons({
       callbackURL,
     });
     if (socialError) {
-      setError(socialError.message ?? "Erro ao continuar");
+      setError(socialError?.message ?? "");
       setPending(null);
     }
   }
@@ -39,7 +43,7 @@ export default function SocialAuthButtons({
       <div className="relative my-5 text-center">
         <span className="absolute inset-x-0 top-1/2 border-t border-line" />
         <span className="relative bg-surface px-2 text-xs text-ink-faint">
-          ou continue com
+          {socialDivider}
         </span>
       </div>
       <div className="grid grid-cols-2 gap-3">

@@ -11,8 +11,22 @@ const labelClass =
 
 export default function ChangePasswordForm({
   mode,
+  strings,
 }: {
   mode: "change" | "set";
+  strings: {
+    passwordMismatch: string;
+    passwordMin: string;
+    currentPassword: string;
+    newPassword: string;
+    confirmPassword: string;
+    changePasswordError: string;
+    savePasswordError: string;
+    passwordSaved: string;
+    savePending: string;
+    changePassword: string;
+    setPassword: string;
+  };
 }) {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -27,7 +41,7 @@ export default function ChangePasswordForm({
     setSuccess("");
 
     if (newPassword !== confirmPassword) {
-      setError("As senhas não coincidem");
+      setError(strings.passwordMismatch);
       return;
     }
 
@@ -39,18 +53,18 @@ export default function ChangePasswordForm({
           newPassword,
         });
         if (changeError) {
-          setError(changeError.message ?? "Erro ao alterar a senha");
+          setError(changeError.message ?? strings.changePasswordError);
           return;
         }
       } else {
         await setPasswordAction(newPassword);
       }
-      setSuccess("Senha salva com sucesso");
+      setSuccess(strings.passwordSaved);
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
     } catch {
-      setError("Erro ao salvar a senha");
+      setError(strings.savePasswordError);
     } finally {
       setPending(false);
     }
@@ -60,7 +74,7 @@ export default function ChangePasswordForm({
     <form onSubmit={handleSubmit} className="space-y-4">
       {mode === "change" && (
         <div>
-          <label className={labelClass}>Senha atual</label>
+          <label className={labelClass}>{strings.currentPassword}</label>
           <input
             type="password"
             required
@@ -72,7 +86,7 @@ export default function ChangePasswordForm({
         </div>
       )}
       <div>
-        <label className={labelClass}>Nova senha</label>
+        <label className={labelClass}>{strings.newPassword}</label>
         <input
           type="password"
           required
@@ -82,10 +96,10 @@ export default function ChangePasswordForm({
           placeholder="••••••••"
           className={inputClass}
         />
-        <p className="mt-1 text-xs text-ink-faint">Mínimo de 8 caracteres.</p>
+        <p className="mt-1 text-xs text-ink-faint">{strings.passwordMin}</p>
       </div>
       <div>
-        <label className={labelClass}>Confirmar nova senha</label>
+        <label className={labelClass}>{strings.confirmPassword}</label>
         <input
           type="password"
           required
@@ -103,7 +117,7 @@ export default function ChangePasswordForm({
         disabled={pending}
         className="rounded bg-accent px-4 py-2 text-sm font-medium text-on-accent transition-colors hover:bg-accent-hover disabled:opacity-60"
       >
-        {pending ? "Salvando..." : mode === "change" ? "Alterar senha" : "Definir senha"}
+        {pending ? strings.savePending : mode === "change" ? strings.changePassword : strings.setPassword}
       </button>
     </form>
   );

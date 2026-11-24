@@ -7,12 +7,26 @@ import { authClient } from "@/lib/auth-client";
 import SocialAuthButtons from "./SocialAuthButtons";
 import type { SocialProvider } from "@/lib/auth-providers";
 
+type LoginStrings = {
+  email: string;
+  password: string;
+  submit: string;
+  pending: string;
+  error: string;
+  noAccount: string;
+  register: string;
+  socialDivider: string;
+  socialError: string;
+};
+
 export default function LoginForm({
   lang,
   providers,
+  strings,
 }: {
   lang: string;
   providers: SocialProvider[];
+  strings: LoginStrings;
 }) {
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -31,7 +45,7 @@ export default function LoginForm({
     });
 
     if (signInError) {
-      setError(signInError.message ?? "Erro ao entrar");
+      setError(signInError.message ?? strings.error);
       setPending(false);
       return;
     }
@@ -45,7 +59,7 @@ export default function LoginForm({
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="mb-1 block text-sm font-medium text-ink-muted">
-            Email
+            {strings.email}
           </label>
           <input
             type="email"
@@ -58,7 +72,7 @@ export default function LoginForm({
         </div>
         <div>
           <label className="mb-1 block text-sm font-medium text-ink-muted">
-            Senha
+            {strings.password}
           </label>
           <input
             type="password"
@@ -75,19 +89,24 @@ export default function LoginForm({
           disabled={pending}
           className="w-full rounded bg-accent py-2 text-sm font-medium text-on-accent transition-colors hover:bg-accent-hover disabled:opacity-60"
         >
-          {pending ? "Entrando..." : "Entrar"}
+          {pending ? strings.pending : strings.submit}
         </button>
       </form>
 
-      <SocialAuthButtons providers={providers} callbackURL={`/${lang}`} />
+      <SocialAuthButtons
+        providers={providers}
+        callbackURL={`/${lang}`}
+        socialDivider={strings.socialDivider}
+        socialError={strings.socialError}
+      />
 
       <p className="mt-6 text-center text-xs text-ink-muted">
-        Ainda não tem conta?{" "}
+        {strings.noAccount}{" "}
         <Link
           href={`/${lang}/register`}
           className="font-medium text-accent hover:text-accent-hover hover:underline"
         >
-          Cadastre-se
+          {strings.register}
         </Link>
       </p>
     </>

@@ -7,16 +7,28 @@
       "contents": "títulos",
       "changes": "cambios"
     },
-    "cheapest": "Plan más barato"
+    "cheapest": "Plan más barato",
+    "keywords": [
+      "streaming",
+      "netflix",
+      "prime video",
+      "disney+",
+      "precio",
+      "catálogo",
+      "suscripción"
+    ]
   },
   "nav": {
     "home": "Inicio",
     "platforms": "Plataformas",
     "contents": "Catálogo",
-    "changes": "Cambios"
+    "changes": "Cambios",
+    "seeAll": "Ver todas",
+    "compare": "Comparación de precios"
   },
   "country": {
     "label": "País",
+    "priceCountry": "País de los precios",
     "pricesFor": "Precios para",
     "changesFor": "Cambios en",
     "noPrice": "Sin precio para este país",
@@ -51,7 +63,13 @@
     "priceHistory": "Historial de Precios",
     "bestPrice": "Mejor Precio",
     "signInToSubscribe": "Inicia sesión para suscribirte",
-    "subscribe": "Suscribirse"
+    "subscribe": "Suscribirse",
+    "periods": {
+      "6m": "Hace 6 meses",
+      "1y": "Hace 1 año",
+      "2y": "Hace 2 años"
+    },
+    "lowestPrice": "Menor precio"
   },
   "contents": {
     "title": "Catálogo de Contenidos",
@@ -81,7 +99,8 @@
       "CONTENT_REMOVED": "Contenido eliminado",
       "NEW_PLATFORM": "Nueva plataforma",
       "PLAN_CHANGE": "Cambio de plan"
-    }
+    },
+    "all": "Todos"
   },
   "compare": {
     "title": "Comparar plataformas",
@@ -114,6 +133,50 @@
     "monthlyEquivalent": "equivalente mensal",
     "yes": "Sí",
     "no": "No",
-    "viewPlatform": "Ver plataforma"
+    "viewPlatform": "Ver plataforma",
+    "priceComparison": "Comparación de precios",
+    "cheapestPlans": "Planes más baratos"
+  },
+  "theme": {
+    "toDark": "Modo oscuro",
+    "toLight": "Modo claro"
+  },
+  "auth": {
+    "login": "Iniciar sesión",
+    "register": "Registrarse",
+    "email": "Email",
+    "password": "Contraseña",
+    "name": "Nombre",
+    "loginError": "Error al iniciar sesión",
+    "registerError": "Error al registrarse",
+    "socialError": "Error al continuar",
+    "socialDivider": "o continúa con",
+    "passwordMismatch": "Las contraseñas no coinciden",
+    "passwordMin": "Mínimo de 8 caracteres.",
+    "passwordSaved": "Contraseña guardada con éxito",
+    "changePasswordError": "Error al cambiar la contraseña",
+    "savePasswordError": "Error al guardar la contraseña",
+    "newPassword": "Nueva contraseña",
+    "currentPassword": "Contraseña actual",
+    "confirmPassword": "Confirmar nueva contraseña",
+    "changePassword": "Cambiar contraseña",
+    "setPassword": "Establecer contraseña",
+    "logout": "Cerrar sesión",
+    "logoutPending": "Cerrando sesión...",
+    "loginTitle": "Iniciar sesión en StreamingDB",
+    "registerTitle": "Crear cuenta",
+    "profileTitle": "Mi cuenta",
+    "signedInWithPassword": "Iniciaste sesión con correo y contraseña.",
+    "accountCreatedViaSocial": "Tu cuenta se creó con Google/GitHub. Define una contraseña para iniciar sesión también con el correo.",
+    "noAccount": "¿No tienes cuenta?",
+    "hasAccount": "Ya tienes cuenta?",
+    "loginPending": "Iniciando sesión...",
+    "registerPending": "Creando cuenta...",
+    "savePending": "Guardando...",
+    "backToHome": "Volver al inicio",
+    "submit": "Iniciar sesión",
+    "pending": "Iniciando sesión...",
+    "error": "Error al iniciar sesión",
+    "minLength": "Mínimo de 8 caracteres."
   }
 }

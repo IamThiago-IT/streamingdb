@@ -7,12 +7,28 @@ import { authClient } from "@/lib/auth-client";
 import SocialAuthButtons from "./SocialAuthButtons";
 import type { SocialProvider } from "@/lib/auth-providers";
 
+type RegisterStrings = {
+  name: string;
+  email: string;
+  password: string;
+  submit: string;
+  pending: string;
+  error: string;
+  minLength: string;
+  hasAccount: string;
+  login: string;
+  socialDivider: string;
+  socialError: string;
+};
+
 export default function RegisterForm({
   lang,
   providers,
+  strings,
 }: {
   lang: string;
   providers: SocialProvider[];
+  strings: RegisterStrings;
 }) {
   const router = useRouter();
   const [name, setName] = useState("");
@@ -33,7 +49,7 @@ export default function RegisterForm({
     });
 
     if (signUpError) {
-      setError(signUpError.message ?? "Erro ao cadastrar");
+      setError(signUpError.message ?? strings.error);
       setPending(false);
       return;
     }
@@ -47,7 +63,7 @@ export default function RegisterForm({
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="mb-1 block text-sm font-medium text-ink-muted">
-            Nome
+            {strings.name}
           </label>
           <input
             type="text"
@@ -60,7 +76,7 @@ export default function RegisterForm({
         </div>
         <div>
           <label className="mb-1 block text-sm font-medium text-ink-muted">
-            Email
+            {strings.email}
           </label>
           <input
             type="email"
@@ -73,7 +89,7 @@ export default function RegisterForm({
         </div>
         <div>
           <label className="mb-1 block text-sm font-medium text-ink-muted">
-            Senha
+            {strings.password}
           </label>
           <input
             type="password"
@@ -84,7 +100,7 @@ export default function RegisterForm({
             placeholder="••••••••"
             className="w-full rounded border border-line bg-surface px-3 py-2 text-sm text-ink placeholder:text-ink-faint"
           />
-          <p className="mt-1 text-xs text-ink-faint">Mínimo de 8 caracteres.</p>
+          <p className="mt-1 text-xs text-ink-faint">{strings.minLength}</p>
         </div>
         {error && <p className="text-sm text-rise">{error}</p>}
         <button
@@ -92,19 +108,24 @@ export default function RegisterForm({
           disabled={pending}
           className="w-full rounded bg-accent py-2 text-sm font-medium text-on-accent transition-colors hover:bg-accent-hover disabled:opacity-60"
         >
-          {pending ? "Cadastrando..." : "Cadastrar"}
+          {pending ? strings.pending : strings.submit}
         </button>
       </form>
 
-      <SocialAuthButtons providers={providers} callbackURL={`/${lang}`} />
+          <SocialAuthButtons
+            providers={providers}
+            callbackURL={`/${lang}`}
+            socialDivider={strings.socialDivider}
+            socialError={strings.socialError}
+          />
 
       <p className="mt-6 text-center text-xs text-ink-muted">
-        Já tem conta?{" "}
+        {strings.hasAccount}{" "}
         <Link
           href={`/${lang}/login`}
           className="font-medium text-accent hover:text-accent-hover hover:underline"
         >
-          Entrar
+          {strings.login}
         </Link>
       </p>
     </>

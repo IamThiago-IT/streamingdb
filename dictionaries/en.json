@@ -7,16 +7,26 @@
       "contents": "titles",
       "changes": "changes"
     },
-    "cheapest": "Cheapest plan"
+    "cheapest": "Cheapest plan",
+    "keywords": [
+      "streaming",
+      "netflix",
+      "prime video",
+      "disney+",
+      "price tracking"
+    ]
   },
   "nav": {
     "home": "Home",
     "platforms": "Platforms",
     "contents": "Catalog",
-    "changes": "Changes"
+    "changes": "Changes",
+    "seeAll": "See all",
+    "compare": "Price comparison"
   },
   "country": {
     "label": "Country",
+    "priceCountry": "Price country",
     "pricesFor": "Prices for",
     "changesFor": "Changes in",
     "noPrice": "No price for this country",
@@ -51,7 +61,13 @@
     "priceHistory": "Price History",
     "bestPrice": "Best Price",
     "signInToSubscribe": "Sign in to subscribe",
-    "subscribe": "Subscribe"
+    "subscribe": "Subscribe",
+    "periods": {
+      "6m": "6 months ago",
+      "1y": "1 year ago",
+      "2y": "2 years ago"
+    },
+    "lowestPrice": "Lowest price"
   },
   "contents": {
     "title": "Content Catalog",
@@ -81,7 +97,8 @@
       "CONTENT_REMOVED": "Content removed",
       "NEW_PLATFORM": "New platform",
       "PLAN_CHANGE": "Plan change"
-    }
+    },
+    "all": "All"
   },
   "compare": {
     "title": "Compare platforms",
@@ -114,6 +131,50 @@
     "monthlyEquivalent": "monthly equivalent",
     "yes": "Yes",
     "no": "No",
-    "viewPlatform": "View platform"
+    "viewPlatform": "View platform",
+    "priceComparison": "Price comparison",
+    "cheapestPlans": "Cheapest plans"
+  },
+  "theme": {
+    "toDark": "Dark mode",
+    "toLight": "Light mode"
+  },
+  "auth": {
+    "login": "Sign in",
+    "register": "Sign up",
+    "email": "Email",
+    "password": "Password",
+    "name": "Name",
+    "loginError": "Error signing in",
+    "registerError": "Error signing up",
+    "socialError": "Error continuing",
+    "socialDivider": "or continue with",
+    "passwordMismatch": "Passwords do not match",
+    "passwordMin": "Minimum 8 characters.",
+    "passwordSaved": "Password saved successfully",
+    "changePasswordError": "Error changing password",
+    "savePasswordError": "Error saving password",
+    "newPassword": "New password",
+    "currentPassword": "Current password",
+    "confirmPassword": "Confirm new password",
+    "changePassword": "Change password",
+    "setPassword": "Set password",
+    "logout": "Sign out",
+    "logoutPending": "Signing out...",
+    "loginTitle": "Sign in to StreamingDB",
+    "registerTitle": "Create your account",
+    "profileTitle": "My account",
+    "signedInWithPassword": "You signed in with email and password.",
+    "accountCreatedViaSocial": "Your account was created via Google/GitHub. Set a password to also sign in with email.",
+    "noAccount": "Don't have an account?",
+    "hasAccount": "Already have an account?",
+    "loginPending": "Signing in...",
+    "registerPending": "Creating account...",
+    "savePending": "Saving...",
+    "backToHome": "Back to home",
+    "submit": "Sign in",
+    "pending": "Signing in...",
+    "error": "Error signing in",
+    "minLength": "Minimum 8 characters."
   }
 }

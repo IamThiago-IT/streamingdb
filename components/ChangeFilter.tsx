@@ -3,16 +3,13 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback } from "react";
 
-const changeTypes = [
-  { value: "", label: "Todos" },
-  { value: "PRICE_CHANGE", label: "Preço" },
-  { value: "CONTENT_ADDED", label: "Conteúdo adicionado" },
-  { value: "CONTENT_REMOVED", label: "Conteúdo removido" },
-  { value: "NEW_PLATFORM", label: "Nova plataforma" },
-  { value: "PLAN_CHANGE", label: "Mudança de plano" },
-];
-
-export default function ChangeFilter({ lang }: { lang: string }) {
+export default function ChangeFilter({
+  lang,
+  types,
+}: {
+  lang: string;
+  types: { value: string; label: string }[];
+}) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const currentType = searchParams.get("type") ?? "";
@@ -28,7 +25,7 @@ export default function ChangeFilter({ lang }: { lang: string }) {
 
   return (
     <div className="flex flex-wrap gap-2 mb-6">
-      {changeTypes.map((t) => (
+      {types.map((t) => (
         <button
           key={t.value}
           onClick={() => handleChange(t.value)}

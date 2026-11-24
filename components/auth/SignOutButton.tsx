@@ -7,9 +7,13 @@ import { authClient } from "@/lib/auth-client";
 export default function SignOutButton({
   lang,
   className,
+  logoutLabel,
+  logoutPending,
 }: {
   lang: string;
   className?: string;
+  logoutLabel: string;
+  logoutPending: string;
 }) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
@@ -31,7 +35,7 @@ export default function SignOutButton({
         "rounded bg-surface-2 px-3 py-1.5 text-xs font-medium text-ink-muted transition-colors hover:bg-line hover:text-ink disabled:opacity-60"
       }
     >
-      {pending ? "Saindo..." : "Sair"}
+      {pending ? logoutPending : logoutLabel}
     </button>
   );
 }

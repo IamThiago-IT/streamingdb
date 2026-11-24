@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getDictionary, hasLocale } from "../dictionaries";
+import { getDictionary, hasLocale, Locale } from "@/lib/dictionaries";
 import { getPlatforms } from "@/lib/queries";
 import Header from "@/components/Header";
 import PlatformLogo from "@/components/PlatformLogo";
@@ -13,7 +13,7 @@ export default async function PlatformsPage({
 }: PageProps<"/[lang]">) {
   const { lang } = await params;
   if (!hasLocale(lang)) notFound();
-  const dict = await getDictionary(lang);
+  const dict = await getDictionary(lang as Locale);
   const country = await getSelectedCountry();
   const countryName = getCountryName(country, lang);
   const platforms = await getPlatforms(country);

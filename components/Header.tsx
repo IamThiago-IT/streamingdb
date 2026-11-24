@@ -1,13 +1,8 @@
 import Link from "next/link";
 import HeaderActions from "./HeaderActions";
 import { getSelectedCountry } from "@/lib/country";
-
-const links = [
-  { href: "platforms", label: "Plataformas" },
-  { href: "contents", label: "Catálogo" },
-  { href: "compare", label: "Comparar" },
-  { href: "changes", label: "Mudanças" },
-];
+import { getDictionary } from "@/lib/dictionaries";
+import type { Dictionary, Locale } from "@/lib/dictionaries";
 
 export default async function Header({
   lang,
@@ -17,6 +12,14 @@ export default async function Header({
   title: string;
 }) {
   const country = await getSelectedCountry();
+  const dict = (await getDictionary(lang as Locale)) as Dictionary;
+
+  const links = [
+    { href: "platforms", label: dict.nav.platforms },
+    { href: "contents", label: dict.nav.contents },
+    { href: "compare", label: dict.nav.compare },
+    { href: "changes", label: dict.nav.changes },
+  ];
 
   return (
     <header className="border-b border-line">
@@ -42,7 +45,13 @@ export default async function Header({
             ))}
           </nav>
 
-          <HeaderActions lang={lang} country={country} />
+          <HeaderActions
+            lang={lang}
+            country={country}
+            loginLabel={dict.auth.login}
+            logoutLabel={dict.auth.logout}
+            logoutPending={dict.auth.logoutPending}
+          />
         </div>
 
         <nav className="flex items-center gap-5 overflow-x-auto pb-3 text-xs font-medium text-ink-muted md:hidden">

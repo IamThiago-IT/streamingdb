@@ -9,9 +9,15 @@ import CountrySelector from "@/components/CountrySelector";
 export default function HeaderActions({
   lang,
   country,
+  loginLabel,
+  logoutLabel,
+  logoutPending,
 }: {
   lang: string;
   country: string;
+  loginLabel: string;
+  logoutLabel: string;
+  logoutPending: string;
 }) {
   const { theme, toggle } = useTheme();
   const { data: session } = authClient.useSession();
@@ -34,14 +40,18 @@ export default function HeaderActions({
             )}
             {session.user.name ?? session.user.email}
           </Link>
-          <SignOutButton lang={lang} />
+          <SignOutButton
+            lang={lang}
+            logoutLabel={logoutLabel}
+            logoutPending={logoutPending}
+          />
         </>
       ) : (
         <Link
           href={`/${lang}/login`}
           className="rounded bg-surface-2 px-3 py-1.5 text-xs font-medium text-ink-muted transition-colors hover:bg-line"
         >
-          Entrar
+          {loginLabel}
         </Link>
       )}
       <button
