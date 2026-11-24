@@ -2,6 +2,11 @@ import "dotenv/config";
 import { PrismaClient } from "@/app/generated/prisma/client";
 import { createPrismaAdapter } from "@/lib/db-adapter";
 import { countries } from "@/lib/countries";
+import {
+  COLLECTION_METHOD,
+  VERIFICATION_STATUS,
+} from "@/lib/data-quality/constants";
+import { applyOffer } from "@/lib/data-quality/ingest";
 
 const prisma = new PrismaClient({ adapter: createPrismaAdapter() });
 
@@ -105,17 +110,6 @@ function slugify(text: string): string {
   return text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 }
 
-function monthsAgo(n: number): Date {
-  const d = new Date();
-  d.setMonth(d.getMonth() - n);
-  d.setDate(1);
-  return d;
-}
-
-function randomVariation(base: number, pct: number): number {
-  return Math.round(base * (1 + (Math.random() - 0.5) * pct) * 100) / 100;
-}
-
 async function seedPlatformCountries(platformId: string, slug: string) {
   for (const country of countries) {
     const status =
@@ -125,22 +119,38 @@ async function seedPlatformCountries(platformId: string, slug: string) {
           ? "NOT_AVAILABLE"
           : "UNKNOWN";
 
-    await prisma.platformCountry.upsert({
+    // O seed é o dado inicial: nunca sobrescreve uma linha já existente,
+    // que pode ter sido verificada/alterada por uma coleta real.
+    const existing = await prisma.platformCountry.findUnique({
       where: {
         platformId_countryCode: {
           platformId,
           countryCode: country.code,
         },
       },
-      update: { status },
-      create: { platformId, countryCode: country.code, status },
+    });
+    if (existing) continue;
+
+    await prisma.platformCountry.create({
+      data: {
+        platformId,
+        countryCode: country.code,
+        status,
+        source: "SEED",
+        collectedAt: new Date(),
+        collectionMethod: COLLECTION_METHOD.SEED,
+        verificationStatus: VERIFICATION_STATUS.UNVERIFIED,
+      },
     });
   }
 }
 
-async function seedPlan(platformId: string, platformWebsite: string | null, planData: PlanSeed) {
+async function seedPlan(
+  platform: { id: string; name: string; website: string | null },
+  planData: PlanSeed
+) {
   const byTier = await prisma.plan.findFirst({
-    where: { platformId, tierKey: planData.tierKey },
+    where: { platformId: platform.id, tierKey: planData.tierKey },
   });
 
   // Bancos migrados do modelo antigo têm tierKey derivado do nome. Adota o
@@ -148,7 +158,7 @@ async function seedPlan(platformId: string, platformWebsite: string | null, plan
   let plan =
     byTier ??
     (await prisma.plan.findFirst({
-      where: { platformId, name: planData.name },
+      where: { platformId: platform.id, name: planData.name },
     }));
 
   if (plan) {
@@ -162,9 +172,13 @@ async function seedPlan(platformId: string, platformWebsite: string | null, plan
   } else {
     plan = await prisma.plan.create({
       data: {
-        platformId,
+        platformId: platform.id,
         tierKey: planData.tierKey,
         name: planData.name,
+        source: "SEED",
+        collectionMethod: COLLECTION_METHOD.SEED,
+        collectedAt: new Date(),
+        verificationStatus: VERIFICATION_STATUS.UNVERIFIED,
       },
     });
   }
@@ -172,22 +186,12 @@ async function seedPlan(platformId: string, platformWebsite: string | null, plan
   const billingCycle = planData.billingCycle ?? "MONTHLY";
   const billingMonths = billingCycle === "ANNUAL" ? 12 : 1;
 
-  // O seed apenas cria a oferta inicial. Preços verificados depois vêm do
-  // importador/coletor e não podem ser sobrescritos por uma nova execução.
-  const existingOffer = await prisma.planOffer.findUnique({
-    where: {
-      planId_countryCode_billingCycle: {
-        planId: plan.id,
-        countryCode: "BR",
-        billingCycle,
-      },
-    },
-  });
-
-  if (existingOffer) return;
-
-  const offer = await prisma.planOffer.create({
-    data: {
+  // Passa pela mesma camada de ingestão do importador/scraper: o seed cria a
+  // oferta inicial sem se declarar verificado e nunca sobrescreve um preço já
+  // verificado por uma coleta real.
+  await applyOffer(
+    prisma,
+    {
       planId: plan.id,
       countryCode: "BR",
       currency: "BRL",
@@ -198,53 +202,42 @@ async function seedPlan(platformId: string, platformWebsite: string | null, plan
       displayName: planData.name,
       quality: planData.quality ?? null,
       ads: planData.ads,
-      sourceUrl: platformWebsite,
       sourceType: "SEED",
       status: "ACTIVE",
-      lastCheckedAt: new Date(),
-      lastSuccessAt: new Date(),
+      source: "SEED",
+      sourceUrl: platform.website,
+      collectionMethod: COLLECTION_METHOD.SEED,
+      collectedAt: new Date(),
+      verificationStatus: VERIFICATION_STATUS.UNVERIFIED,
     },
-  });
-
-  const historyCount = await prisma.priceHistory.count({
-    where: { offerId: offer.id },
-  });
-
-  if (historyCount === 0) {
-    for (let i = 3; i >= 0; i--) {
-      const oldPrice =
-        i === 0 ? planData.price : randomVariation(planData.price, 0.15);
-      await prisma.priceHistory.create({
-        data: {
-          offerId: offer.id,
-          amount: oldPrice,
-          currency: "BRL",
-          taxIncluded: true,
-          recordedAt: monthsAgo(i),
-        },
-      });
-    }
-  }
+    { process: "prisma/seed" }
+  );
 }
 
 async function main() {
   for (const p of platformsData) {
-    const platform = await prisma.platform.upsert({
+    // Plataforma já existente pode ter sido corrigida/verificada por coleta
+    // real; o seed não sobrescreve metadados consolidados.
+    const existingPlatform = await prisma.platform.findUnique({
       where: { slug: p.slug },
-      update: {
-        name: p.name,
-        color: p.color,
-        logo: p.logo,
-        website: p.website,
-      },
-      create: p,
     });
+    const platform =
+      existingPlatform ??
+      (await prisma.platform.create({
+        data: {
+          ...p,
+          source: "SEED",
+          collectionMethod: COLLECTION_METHOD.SEED,
+          collectedAt: new Date(),
+          verificationStatus: VERIFICATION_STATUS.UNVERIFIED,
+        },
+      }));
 
     await seedPlatformCountries(platform.id, p.slug);
 
     const planEntries = plansData[p.slug] ?? [];
     for (const planData of planEntries) {
-      await seedPlan(platform.id, platform.website, planData);
+      await seedPlan(platform, planData);
     }
   }
 
@@ -274,26 +267,29 @@ async function main() {
   });
 
   for (const [contentIndex, c] of sampleContent.entries()) {
-    const content = await prisma.content.upsert({
-      where: { slug: slugify(c.title) },
-      update: {
-        title: c.title,
-        originalTitle: c.originalTitle,
-        type: c.type,
-        year: c.year,
-        genre: c.genre,
-        rating: c.rating,
-      },
-      create: {
-        title: c.title,
-        originalTitle: c.originalTitle,
-        slug: slugify(c.title),
-        type: c.type,
-        year: c.year,
-        genre: c.genre,
-        rating: c.rating,
-      },
+    const slug = slugify(c.title);
+    // Conteúdo existente pode ter sido enriquecido por fonte externa;
+    // o seed só cria o registro inicial.
+    const existingContent = await prisma.content.findUnique({
+      where: { slug },
     });
+    const content =
+      existingContent ??
+      (await prisma.content.create({
+        data: {
+          title: c.title,
+          originalTitle: c.originalTitle,
+          slug,
+          type: c.type,
+          year: c.year,
+          genre: c.genre,
+          rating: c.rating,
+          source: "SEED",
+          collectionMethod: COLLECTION_METHOD.SEED,
+          collectedAt: new Date(),
+          verificationStatus: VERIFICATION_STATUS.UNVERIFIED,
+        },
+      }));
 
     // Distribuição determinística: reexecutar o seed não cria novas
     // disponibilidades nem novos logs.
@@ -303,15 +299,30 @@ async function main() {
     );
 
     for (const platform of assigned) {
-      await prisma.contentAvailability.upsert({
+      // Só cria o vínculo inicial: uma disponibilidade removida por coleta
+      // real não é reativada por uma reexecução do seed.
+      const existingAvailability = await prisma.contentAvailability.findUnique({
         where: {
-          contentId_platformId: {
+          contentId_platformId_countryCode: {
             contentId: content.id,
             platformId: platform.id,
+            countryCode: "BR",
           },
         },
-        update: { available: true, removedAt: null },
-        create: { contentId: content.id, platformId: platform.id },
+      });
+      if (existingAvailability) continue;
+
+      await prisma.contentAvailability.create({
+        data: {
+          contentId: content.id,
+          platformId: platform.id,
+          countryCode: "BR",
+          available: true,
+          source: "SEED",
+          collectionMethod: COLLECTION_METHOD.SEED,
+          collectedAt: new Date(),
+          verificationStatus: VERIFICATION_STATUS.UNVERIFIED,
+        },
       });
     }
   }
@@ -325,8 +336,12 @@ async function main() {
       await prisma.changeLog.create({
         data: {
           type: "NEW_PLATFORM",
+          entityType: "PLATFORM",
+          entityId: platform.id,
           description: `${platform.name} foi adicionada ao catálogo`,
           platformId: platform.id,
+          source: "SEED",
+          process: "prisma/seed",
         },
       });
     }
@@ -352,9 +367,13 @@ async function main() {
       await prisma.changeLog.create({
         data: {
           type: "CONTENT_ADDED",
+          entityType: "CONTENT",
+          entityId: content.id,
           description: `${content.title} foi adicionado à ${platform.name}`,
           platformId: platform.id,
           contentId: content.id,
+          source: "SEED",
+          process: "prisma/seed",
         },
       });
     }

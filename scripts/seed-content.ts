@@ -1,6 +1,10 @@
 import "dotenv/config";
 import { PrismaClient } from "@/app/generated/prisma/client";
 import { createPrismaAdapter } from "@/lib/db-adapter";
+import {
+  COLLECTION_METHOD,
+  VERIFICATION_STATUS,
+} from "@/lib/data-quality/constants";
 
 const prisma = new PrismaClient({ adapter: createPrismaAdapter() });
 
@@ -47,6 +51,10 @@ async function main() {
         year: item.year,
         genre: item.genre,
         rating: item.rating,
+        source: "SEED",
+        collectionMethod: COLLECTION_METHOD.SEED,
+        collectedAt: new Date(),
+        verificationStatus: VERIFICATION_STATUS.UNVERIFIED,
       },
     });
 
@@ -59,18 +67,46 @@ async function main() {
         continue;
       }
 
-      await prisma.contentAvailability.create({
-        data: { contentId: content.id, platformId: platform.id },
-      });
+      // Não reativa vínculo removido nem declara verificação.
+      const existingAvailability =
+        await prisma.contentAvailability.findUnique({
+          where: {
+            contentId_platformId_countryCode: {
+              contentId: content.id,
+              platformId: platform.id,
+              countryCode: "BR",
+            },
+          },
+        });
 
-      await prisma.changeLog.create({
-        data: {
-          type: "CONTENT_ADDED",
-          description: `${item.title} foi adicionado à ${platform.name}`,
-          platformId: platform.id,
-          contentId: content.id,
-        },
-      });
+      if (!existingAvailability) {
+        await prisma.contentAvailability.create({
+          data: {
+            contentId: content.id,
+            platformId: platform.id,
+            countryCode: "BR",
+            available: true,
+            source: "SEED",
+            collectionMethod: COLLECTION_METHOD.SEED,
+            collectedAt: new Date(),
+            verificationStatus: VERIFICATION_STATUS.UNVERIFIED,
+          },
+        });
+
+        await prisma.changeLog.create({
+          data: {
+            type: "CONTENT_ADDED",
+            entityType: "CONTENT",
+            entityId: content.id,
+            description: `${item.title} foi adicionado à ${platform.name}`,
+            platformId: platform.id,
+            contentId: content.id,
+            countryCode: "BR",
+            source: "SEED",
+            process: "scripts/seed-content",
+          },
+        });
+      }
 
       console.log(`  ✓ "${item.title}" → ${platform.name}`);
     }

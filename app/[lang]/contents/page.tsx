@@ -4,6 +4,7 @@ import { getDictionary, hasLocale } from "../dictionaries";
 import { getContents, getPlatformList } from "@/lib/queries";
 import Header from "@/components/Header";
 import PlatformLogo from "@/components/PlatformLogo";
+import { getSelectedCountry } from "@/lib/country";
 
 export default async function ContentsPage({
   params,
@@ -14,6 +15,7 @@ export default async function ContentsPage({
   if (!hasLocale(lang)) notFound();
 
   const dict = await getDictionary(lang);
+  const country = await getSelectedCountry();
   const platforms = await getPlatformList();
 
   const query = typeof sp.q === "string" ? sp.q : "";
@@ -25,6 +27,7 @@ export default async function ContentsPage({
     query: query || undefined,
     type: type || undefined,
     platform: platform || undefined,
+    countryCode: country,
     page,
     limit: 20,
   });

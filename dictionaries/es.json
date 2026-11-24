@@ -1,0 +1,119 @@
+{
+  "home": {
+    "title": "StreamingDB",
+    "description": "Sigue precios, catálogos y cambios en plataformas de streaming",
+    "stats": {
+      "platforms": "plataformas",
+      "contents": "títulos",
+      "changes": "cambios"
+    },
+    "cheapest": "Plan más barato"
+  },
+  "nav": {
+    "home": "Inicio",
+    "platforms": "Plataformas",
+    "contents": "Catálogo",
+    "changes": "Cambios"
+  },
+  "country": {
+    "label": "País",
+    "pricesFor": "Precios para",
+    "changesFor": "Cambios en",
+    "noPrice": "Sin precio para este país",
+    "notAvailable": "No disponible en este país",
+    "notCollected": "Precio aún no recolectado",
+    "stale": "Actualizado",
+    "taxIncluded": "Impuestos incluidos",
+    "taxNotIncluded": "Impuestos no incluidos"
+  },
+  "pricing": {
+    "month": "mes",
+    "year": "año",
+    "annual": "anual",
+    "monthly": "mensual",
+    "months": "meses"
+  },
+  "platforms": {
+    "title": "Plataformas de Streaming",
+    "plans": "Planes",
+    "planSingular": "plan",
+    "price": "Precio",
+    "priceRange": "desde",
+    "contentCount": "títulos",
+    "contentSingular": "título",
+    "noPlatforms": "No se encontraron plataformas"
+  },
+  "platform": {
+    "plans": "Planes y Precios",
+    "catalog": "Catálogo de Contenidos",
+    "changes": "Cambios Recientes",
+    "contentCount": "títulos disponibles",
+    "priceHistory": "Historial de Precios",
+    "bestPrice": "Mejor Precio",
+    "signInToSubscribe": "Inicia sesión para suscribirte",
+    "subscribe": "Suscribirse"
+  },
+  "contents": {
+    "title": "Catálogo de Contenidos",
+    "searchPlaceholder": "Buscar películas y series...",
+    "filterType": "Tipo",
+    "all": "Todos",
+    "movies": "Películas",
+    "series": "Series",
+    "noResults": "No se encontró contenido",
+    "availableOn": "Disponible en"
+  },
+  "content": {
+    "type_movie": "Película",
+    "type_series": "Serie",
+    "year": "Año",
+    "genre": "Género",
+    "rating": "Valoración",
+    "availability": "Disponibilidad",
+    "changes": "Cambios"
+  },
+  "changes": {
+    "title": "Cambios Recientes",
+    "noChanges": "No hay cambios registrados",
+    "types": {
+      "PRICE_CHANGE": "Cambio de precio",
+      "CONTENT_ADDED": "Contenido añadido",
+      "CONTENT_REMOVED": "Contenido eliminado",
+      "NEW_PLATFORM": "Nueva plataforma",
+      "PLAN_CHANGE": "Cambio de plan"
+    }
+  },
+  "compare": {
+    "title": "Comparar plataformas",
+    "pick": "Elige 2 o 3 plataformas",
+    "selectedCount": "{count} de 3 seleccionadas",
+    "compare": "Comparar",
+    "loading": "Comparando...",
+    "clear": "Limpiar",
+    "hint": "Selecciona al menos 2 plataformas.",
+    "max": "Máximo de 3 plataformas.",
+    "emptyTitle": "Selecciona al menos 2 plataformas",
+    "emptyHint": "Elige las plataformas anteriores y haz clic en Comparar.",
+    "oneSelected": "Selecciona una plataforma más para comparar.",
+    "feature": "Característica",
+    "cheapest": "Plan más barato",
+    "cheapestNoAds": "Plan sin anuncios",
+    "planCount": "Planes disponibles",
+    "catalog": "Títulos en el catálogo",
+    "maxQuality": "Calidad máxima",
+    "adsOption": "Opción con anuncios",
+    "availability": "Disponibilidad",
+    "available": "Disponible",
+    "notAvailable": "No disponible",
+    "unavailable": "No disponible en este país",
+    "bestPrice": "Mejor precio",
+    "plansTitle": "Planes por plataforma",
+    "remove": "Eliminar",
+    "withAds": "Con anuncios",
+    "withoutAds": "Sin anuncios",
+    "monthlyEquivalent": "equivalente mensal",
+    "yes": "Sí",
+    "no": "No",
+    "viewPlatform": "Ver plataforma"
+  }
+}

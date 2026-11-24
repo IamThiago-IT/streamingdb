@@ -4,6 +4,7 @@ import { getDictionary, hasLocale } from "../../dictionaries";
 import { getContentBySlug } from "@/lib/queries";
 import Header from "@/components/Header";
 import PlatformLogo from "@/components/PlatformLogo";
+import { getSelectedCountry } from "@/lib/country";
 
 export default async function ContentDetail({
   params,
@@ -12,7 +13,8 @@ export default async function ContentDetail({
   if (!hasLocale(lang)) notFound();
 
   const dict = await getDictionary(lang);
-  const content = await getContentBySlug(slug);
+  const country = await getSelectedCountry();
+  const content = await getContentBySlug(slug, country);
 
   if (!content) notFound();
 

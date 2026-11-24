@@ -1,9 +1,18 @@
 import "dotenv/config";
 import { readFileSync } from "node:fs";
+import { basename } from "node:path";
 import { PrismaClient } from "@/app/generated/prisma/client";
 import { createPrismaAdapter } from "@/lib/db-adapter";
 import { getCountry, isCountry } from "@/lib/countries";
-import { formatMoney } from "@/lib/money";
+import {
+  COLLECTION_METHOD,
+  VERIFICATION_STATUS,
+} from "@/lib/data-quality/constants";
+import {
+  applyOffer,
+  finishCollectionRun,
+  startCollectionRun,
+} from "@/lib/data-quality/ingest";
 
 const prisma = new PrismaClient({ adapter: createPrismaAdapter() });
 
@@ -144,7 +153,10 @@ type ImportResult = {
   errors: string[];
 };
 
-async function importRow(row: Row, dryRun: boolean): Promise<"created" | "updated" | "unchanged"> {
+async function importRow(
+  row: Row,
+  dryRun: boolean
+): Promise<"created" | "updated" | "unchanged"> {
   const countryCode = row.country_code.toUpperCase();
   if (!isCountry(countryCode)) {
     throw new Error(`país não suportado: ${countryCode}`);
@@ -164,10 +176,6 @@ async function importRow(row: Row, dryRun: boolean): Promise<"created" | "update
   }
 
   const billingCycle = row.billing_cycle.toUpperCase() || "MONTHLY";
-  if (!["MONTHLY", "ANNUAL", "QUARTERLY"].includes(billingCycle)) {
-    throw new Error(`billing_cycle inválido: ${row.billing_cycle}`);
-  }
-
   const billingMonths =
     Number(row.billing_months) ||
     (billingCycle === "ANNUAL" ? 12 : billingCycle === "QUARTERLY" ? 3 : 1);
@@ -180,153 +188,46 @@ async function importRow(row: Row, dryRun: boolean): Promise<"created" | "update
     throw new Error("display_name e tier_key são obrigatórios");
   }
 
-  const platform = await prisma.platform.findUnique({
-    where: { slug: row.platform_slug },
-  });
-  if (!platform) {
-    throw new Error(`plataforma não encontrada: ${row.platform_slug}`);
-  }
-
-  let plan = await prisma.plan.findFirst({
-    where: { platformId: platform.id, tierKey },
-  });
-  if (!plan) {
-    if (dryRun) {
-      return "created";
-    }
-    plan = await prisma.plan.create({
-      data: { platformId: platform.id, tierKey, name: displayName },
-    });
-  }
-
-  const verifiedAt = row.verified_at
-    ? new Date(row.verified_at)
-    : new Date();
-  if (Number.isNaN(verifiedAt.getTime())) {
+  // `verified_at` é a declaração explícita de verificação da planilha.
+  // Sem ele, o registro entra como UNVERIFIED e não pode sobrescrever
+  // um preço já verificado.
+  const verifiedAt = row.verified_at ? new Date(row.verified_at) : null;
+  if (verifiedAt && Number.isNaN(verifiedAt.getTime())) {
     throw new Error(`verified_at inválido: ${row.verified_at}`);
   }
+  const now = new Date();
 
-  const existing = await prisma.planOffer.findUnique({
-    where: {
-      planId_countryCode_billingCycle: {
-        planId: plan.id,
-        countryCode,
-        billingCycle,
-      },
-    },
-    include: { history: { orderBy: { recordedAt: "desc" }, take: 1 } },
-  });
-
-  const data = {
-    planId: plan.id,
-    countryCode,
-    currency,
-    amount,
-    billingCycle,
-    billingMonths,
-    taxIncluded,
-    displayName,
-    quality: row.quality || null,
-    ads,
-    sourceUrl: row.source_url || null,
-    sourceType: row.source_type || "MANUAL",
-    status: "ACTIVE",
-    lastCheckedAt: verifiedAt,
-    lastSuccessAt: verifiedAt,
-  };
-
-  const previousAmount = Number(
-    existing?.history[0]?.amount ?? existing?.amount ?? amount
-  );
-  const previousCurrency =
-    existing?.history[0]?.currency ?? existing?.currency ?? currency;
-  const priceChanged = existing
-    ? Math.abs(previousAmount - amount) > 0.01 || previousCurrency !== currency
-    : false;
-  const needsHistory = existing ? existing.history.length === 0 : false;
-
-  if (dryRun) {
-    return existing
-      ? priceChanged || needsHistory
-        ? "updated"
-        : "unchanged"
-      : "created";
-  }
-
-  if (!existing) {
-    const offer = await prisma.planOffer.create({ data });
-    await prisma.priceHistory.create({
-      data: {
-        offerId: offer.id,
-        amount,
-        currency,
-        taxIncluded,
-        recordedAt: verifiedAt,
-      },
-    });
-    await prisma.changeLog.create({
-      data: {
-        type: "PLAN_CHANGE",
-        description: `${platform.name} (${countryCode}): Nova oferta "${displayName}" por ${formatMoney(amount, currency, "pt-BR")}`,
-        platformId: platform.id,
-        countryCode,
-        currency,
-        newValue: String(amount),
-      },
-    });
-  } else {
-    await prisma.planOffer.update({
-      where: { id: existing.id },
-      data,
-    });
-
-    if (priceChanged || needsHistory) {
-      await prisma.priceHistory.create({
-        data: {
-          offerId: existing.id,
-          amount,
-          currency,
-          taxIncluded,
-          recordedAt: verifiedAt,
-        },
-      });
-    }
-
-    if (priceChanged) {
-      await prisma.changeLog.create({
-        data: {
-          type: "PRICE_CHANGE",
-          description: `${platform.name} (${countryCode}): ${displayName} mudou de ${formatMoney(previousAmount, previousCurrency, "pt-BR")} para ${formatMoney(amount, currency, "pt-BR")}`,
-          platformId: platform.id,
-          countryCode,
-          currency,
-          oldValue: String(previousAmount),
-          newValue: String(amount),
-        },
-      });
-    }
-  }
-
-  await prisma.platformCountry.upsert({
-    where: {
-      platformId_countryCode: {
-        platformId: platform.id,
-        countryCode,
-      },
-    },
-    update: { status: "OPERATES" },
-    create: {
-      platformId: platform.id,
+  const result = await applyOffer(
+    prisma,
+    {
+      platformSlug: row.platform_slug,
+      tierKey,
+      planName: displayName,
       countryCode,
-      status: "OPERATES",
+      currency,
+      amount,
+      billingCycle,
+      billingMonths,
+      taxIncluded,
+      displayName,
+      quality: row.quality || null,
+      ads,
+      sourceUrl: row.source_url || null,
+      sourceType: row.source_type || "CSV_IMPORT",
+      status: "ACTIVE",
+      source: row.source_type || "CSV_IMPORT",
+      collectionMethod: COLLECTION_METHOD.CSV_IMPORT,
+      collectedAt: verifiedAt ?? now,
+      lastCheckedAt: verifiedAt ?? now,
+      lastVerifiedAt: verifiedAt,
+      verificationStatus: verifiedAt
+        ? VERIFICATION_STATUS.VERIFIED
+        : VERIFICATION_STATUS.UNVERIFIED,
     },
-  });
+    { process: "scripts/import-offers", dryRun }
+  );
 
-  return existing
-    ? priceChanged || needsHistory
-      ? "updated"
-      : "unchanged"
-    : "created";
+  return result.status;
 }
 
 async function main() {
@@ -351,6 +252,17 @@ async function main() {
     errors: [],
   };
 
+  // Toda importação executada deixa um registro auditável, inclusive
+  // quando termina com falhas parciais.
+  const runId = dryRun
+    ? null
+    : await startCollectionRun(prisma, {
+        kind: "CSV_IMPORT",
+        source: basename(fileArg),
+        status: "RUNNING",
+        offersFound: rows.length,
+      });
+
   for (const [i, row] of rows.entries()) {
     try {
       const status = await importRow(row, dryRun);
@@ -359,6 +271,24 @@ async function main() {
       const message = error instanceof Error ? error.message : String(error);
       result.errors.push(`linha ${i + 2}: ${message}`);
     }
+  }
+
+  if (runId) {
+    await finishCollectionRun(prisma, runId, {
+      kind: "CSV_IMPORT",
+      source: basename(fileArg),
+      status: result.errors.length > 0 ? "PARTIAL" : "SUCCESS",
+      offersFound: rows.length,
+      recordsCreated: result.created,
+      recordsUpdated: result.updated,
+      recordsUnchanged: result.unchanged,
+      recordsFailed: result.errors.length,
+      errorCode: result.errors.length > 0 ? "INVALID_DATA" : null,
+      error:
+        result.errors.length > 0
+          ? result.errors.slice(0, 10).join(" | ")
+          : null,
+    });
   }
 
   console.log(`\n=== Importação de ofertas${dryRun ? " (dry-run)" : ""} ===`);
@@ -379,3 +309,4 @@ main()
     process.exit(1);
   })
   .finally(() => prisma.$disconnect());
+

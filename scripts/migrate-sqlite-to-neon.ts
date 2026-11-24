@@ -207,6 +207,7 @@ async function main() {
     (r) => ({
       ...r,
       available: b(r.available as number),
+      countryCode: (r.countryCode as string | null) ?? "BR",
       addedAt: d(r.addedAt as string),
       removedAt: d(r.removedAt as string | null),
       updatedAt: d(r.updatedAt as string),

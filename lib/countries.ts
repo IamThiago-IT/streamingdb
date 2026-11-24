@@ -68,5 +68,7 @@ export function getCountryFlag(code: string): string {
 
 /** Fallback de país quando ainda não há cookie nem header de geolocalização. */
 export function countryForLocale(locale: string): CountryCode {
-  return locale === "pt-BR" ? "BR" : "US";
+  if (locale === "pt-BR") return "BR";
+  if (locale === "es") return "ES";
+  return "US";
 }

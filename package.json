@@ -18,7 +18,15 @@
     "validate:offers": "npx tsx scripts/validate-offers.ts",
     "scrape": "npx tsx scripts/scraper.ts",
     "monitor": "npx tsx scripts/monitor.ts",
-    "seed:content": "npx tsx scripts/seed-content.ts"
+    "seed:content": "npx tsx scripts/seed-content.ts",
+    "quality:report": "npx tsx scripts/quality-report.ts",
+    "quality:scan": "npx tsx scripts/quality-report.ts --scan",
+    "quality:refresh-stale": "npx tsx scripts/refresh-stale.ts",
+    "test:setup": "npx tsx scripts/prepare-test-db.ts",
+    "pretest": "npx tsx scripts/prepare-test-db.ts",
+    "test": "jest --runInBand",
+    "test:watch": "jest --watch --runInBand",
+    "typecheck": "tsc --noEmit"
   },
   "prisma": {
     "seed": "npx tsx prisma/seed.ts"
@@ -52,12 +60,15 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/better-sqlite3": "^7.6.13",
+    "@types/jest": "^30.0.0",
     "@types/node": "^20",
     "@types/pg": "^8.20.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.2",
+    "jest": "^30.5.2",
+    "jest-environment-node": "^30.5.2",
     "prisma": "^7.8.0",
     "tailwindcss": "^4",
     "tsx": "^4.22.3",

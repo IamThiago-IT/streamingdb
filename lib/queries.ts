@@ -4,6 +4,10 @@ import { monthlyAmount } from "./money";
 
 const activeOfferStatuses = ["ACTIVE", "STALE"];
 
+function liveAvailability(countryCode: string) {
+  return { available: true as const, countryCode };
+}
+
 export async function getPlatforms(countryCode: string) {
   return prisma.platform.findMany({
     include: {
@@ -13,7 +17,9 @@ export async function getPlatforms(countryCode: string) {
         },
       },
       platformCountries: { where: { countryCode } },
-      _count: { select: { availability: { where: { available: true } } } },
+      _count: {
+        select: { availability: { where: liveAvailability(countryCode) } },
+      },
     },
     orderBy: { name: "asc" },
   });
@@ -41,7 +47,7 @@ export async function getPlatformBySlug(slug: string, countryCode: string) {
       },
       platformCountries: { where: { countryCode } },
       availability: {
-        where: { available: true },
+        where: liveAvailability(countryCode),
         include: { content: true },
         orderBy: { addedAt: "desc" },
         take: 50,
@@ -86,10 +92,19 @@ export async function getContents(params: {
   type?: string;
   platform?: string;
   genre?: string;
+  countryCode: string;
   page?: number;
   limit?: number;
 }) {
-  const { query, type, platform, genre, page = 1, limit = 20 } = params;
+  const {
+    query,
+    type,
+    platform,
+    genre,
+    countryCode,
+    page = 1,
+    limit = 20,
+  } = params;
   const where: Record<string, unknown> = {};
 
   if (query) {
@@ -101,7 +116,12 @@ export async function getContents(params: {
   if (type) where.type = type;
   if (genre) where.genre = containsInsensitive(genre);
   if (platform) {
-    where.availability = { some: { platform: { slug: platform }, available: true } };
+    where.availability = {
+      some: {
+        platform: { slug: platform },
+        ...liveAvailability(countryCode),
+      },
+    };
   }
 
   const [data, total] = await Promise.all([
@@ -109,7 +129,7 @@ export async function getContents(params: {
       where,
       include: {
         availability: {
-          where: { available: true },
+          where: liveAvailability(countryCode),
           include: { platform: true },
         },
       },
@@ -123,12 +143,12 @@ export async function getContents(params: {
   return { data, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } };
 }
 
-export async function getContentBySlug(slug: string) {
+export async function getContentBySlug(slug: string, countryCode: string) {
   return prisma.content.findUnique({
     where: { slug },
     include: {
       availability: {
-        where: { available: true },
+        where: liveAvailability(countryCode),
         include: { platform: true },
         orderBy: { addedAt: "desc" },
       },

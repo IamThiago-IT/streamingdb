@@ -3,6 +3,16 @@ import { PrismaClient } from "@/app/generated/prisma/client";
 import { createPrismaAdapter } from "@/lib/db-adapter";
 import * as cheerio from "cheerio";
 import { formatMoney } from "@/lib/money";
+import {
+  COLLECTION_METHOD,
+  VERIFICATION_STATUS,
+} from "@/lib/data-quality/constants";
+import {
+  applyOffer,
+  finishCollectionRun,
+  recordOfferCheckFailure,
+  startCollectionRun,
+} from "@/lib/data-quality/ingest";
 
 const prisma = new PrismaClient({ adapter: createPrismaAdapter() });
 
@@ -43,20 +53,45 @@ function slugify(text: string): string {
     .replace(/(^-|-$)/g, "");
 }
 
-async function scrapePlatform(config: ScraperConfig) {
+type ScrapeOutcome =
+  | { ok: true; httpStatus: number; plans: { name: string; price: number }[] }
+  | {
+      ok: false;
+      httpStatus: number | null;
+      errorCode: "HTTP_ERROR" | "TIMEOUT" | "NETWORK_ERROR" | "PARSE_EMPTY";
+      error: string;
+    };
+
+async function scrapePlatform(config: ScraperConfig): Promise<ScrapeOutcome> {
   console.log(`Scraping ${config.name} (${config.countryCode})...`);
 
+  let res: Response;
   try {
-    const res = await fetch(config.url, {
+    res = await fetch(config.url, {
       headers: { "User-Agent": "Mozilla/5.0 (compatible; StreamingDB/1.0)" },
       signal: AbortSignal.timeout(10000),
     });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    const timedOut = /timeout|aborted/i.test(message);
+    return {
+      ok: false,
+      httpStatus: null,
+      errorCode: timedOut ? "TIMEOUT" : "NETWORK_ERROR",
+      error: message,
+    };
+  }
 
-    if (!res.ok) {
-      console.warn(`  ${config.name}: HTTP ${res.status} - skipping`);
-      return [];
-    }
+  if (!res.ok) {
+    return {
+      ok: false,
+      httpStatus: res.status,
+      errorCode: "HTTP_ERROR",
+      error: `HTTP ${res.status}`,
+    };
+  }
 
+  try {
     const html = await res.text();
     const $ = cheerio.load(html);
     const plans: { name: string; price: number }[] = [];
@@ -64,192 +99,210 @@ async function scrapePlatform(config: ScraperConfig) {
     $(config.selectors.plans).each((_, el) => {
       const name = $(el).find(config.selectors.name).text().trim();
       const priceText = $(el).find(config.selectors.price).text().trim();
-      const price = parseFloat(priceText.replace(/[^0-9,]/g, "").replace(",", "."));
+      const price = parseFloat(
+        priceText.replace(/[^0-9,]/g, "").replace(",", ".")
+      );
 
-      if (name && !isNaN(price)) {
+      if (name && Number.isFinite(price)) {
         plans.push({ name, price });
       }
     });
 
+    if (plans.length === 0) {
+      return {
+        ok: false,
+        httpStatus: res.status,
+        errorCode: "PARSE_EMPTY",
+        error: "nenhum plano reconhecido na página",
+      };
+    }
+
     console.log(`  Found ${plans.length} plans for ${config.name}`);
-    return plans;
-  } catch (err) {
-    console.warn(`  ${config.name}: Error - ${err}`);
-    return [];
+    return { ok: true, httpStatus: res.status, plans };
+  } catch (error) {
+    return {
+      ok: false,
+      httpStatus: res.status,
+      errorCode: "PARSE_EMPTY",
+      error: error instanceof Error ? error.message : String(error),
+    };
   }
+}
+
+async function markCheckFailure(config: ScraperConfig, checkedAt: Date) {
+  const offers = await prisma.planOffer.findMany({
+    where: {
+      countryCode: config.countryCode,
+      billingCycle: "MONTHLY",
+      plan: { platform: { slug: config.slug } },
+    },
+    select: { id: true },
+  });
+
+  for (const offer of offers) {
+    await recordOfferCheckFailure(prisma, {
+      offerId: offer.id,
+      checkedAt,
+    });
+  }
+
+  return offers.length;
 }
 
 async function updatePlatform(
   config: ScraperConfig,
-  scrapedPlans: { name: string; price: number }[]
+  plans: { name: string; price: number }[]
 ) {
   const platform = await prisma.platform.findUnique({
     where: { slug: config.slug },
-    include: {
-      plans: {
-        include: {
-          offers: {
-            where: {
-              countryCode: config.countryCode,
-              billingCycle: "MONTHLY",
-            },
-            include: {
-              history: { orderBy: { recordedAt: "desc" }, take: 1 },
-            },
-          },
-        },
-      },
-    },
   });
-
   if (!platform) {
-    console.warn(`  Platform ${config.slug} not found in DB`);
-    return;
+    throw new Error(`plataforma não encontrada: ${config.slug}`);
   }
 
-  for (const scrapedPlan of scrapedPlans) {
-    const tierKey = slugify(scrapedPlan.name);
-    const existingPlan = platform.plans.find(
-      (plan) =>
-        plan.tierKey === tierKey ||
-        plan.name.toLowerCase() === scrapedPlan.name.toLowerCase()
-    );
+  const counts = {
+    created: 0,
+    updated: 0,
+    unchanged: 0,
+    failed: 0,
+  };
+  const now = new Date();
 
-    let planId: string;
-    if (existingPlan) {
-      planId = existingPlan.id;
-    } else {
-      const created = await prisma.plan.create({
-        data: {
+  for (const plan of plans) {
+    const tierKey = slugify(plan.name);
+    try {
+      const result = await applyOffer(
+        prisma,
+        {
           platformId: platform.id,
           tierKey,
-          name: scrapedPlan.name,
-        },
-      });
-      planId = created.id;
-    }
-
-    const existingOffer = existingPlan?.offers[0];
-    const now = new Date();
-
-    if (existingOffer) {
-      const latestHistory = existingOffer.history[0];
-      const previousAmount = Number(
-        latestHistory?.amount ?? existingOffer.amount
-      );
-      const previousCurrency = latestHistory?.currency ?? existingOffer.currency;
-
-      if (Math.abs(previousAmount - scrapedPlan.price) > 0.01) {
-        await prisma.priceHistory.create({
-          data: {
-            offerId: existingOffer.id,
-            amount: scrapedPlan.price,
-            currency: config.currency,
-            taxIncluded: config.taxIncluded,
-            recordedAt: now,
-          },
-        });
-
-        await prisma.planOffer.update({
-          where: { id: existingOffer.id },
-          data: {
-            amount: scrapedPlan.price,
-            currency: config.currency,
-            taxIncluded: config.taxIncluded,
-            status: "ACTIVE",
-            lastCheckedAt: now,
-            lastSuccessAt: now,
-          },
-        });
-
-        await prisma.changeLog.create({
-          data: {
-            type: "PRICE_CHANGE",
-            description: `${platform.name} (${config.countryCode}): ${scrapedPlan.name} mudou de ${formatMoney(previousAmount, previousCurrency, config.locale)} para ${formatMoney(scrapedPlan.price, config.currency, config.locale)}`,
-            platformId: platform.id,
-            countryCode: config.countryCode,
-            currency: config.currency,
-            oldValue: String(previousAmount),
-            newValue: String(scrapedPlan.price),
-          },
-        });
-
-        console.log(
-          `  ⚡ ${scrapedPlan.name}: ${formatMoney(previousAmount, previousCurrency, config.locale)} → ${formatMoney(scrapedPlan.price, config.currency, config.locale)}`
-        );
-      } else {
-        await prisma.planOffer.update({
-          where: { id: existingOffer.id },
-          data: {
-            status: "ACTIVE",
-            lastCheckedAt: now,
-            lastSuccessAt: now,
-          },
-        });
-      }
-    } else {
-      const offer = await prisma.planOffer.create({
-        data: {
-          planId,
+          planName: plan.name,
           countryCode: config.countryCode,
           currency: config.currency,
-          amount: scrapedPlan.price,
+          amount: plan.price,
           billingCycle: "MONTHLY",
           billingMonths: 1,
           taxIncluded: config.taxIncluded,
-          displayName: scrapedPlan.name,
+          displayName: plan.name,
           ads: false,
           sourceUrl: config.url,
           sourceType: "OFFICIAL_WEB",
           status: "ACTIVE",
+          source: "OFFICIAL_WEB",
+          collectionMethod: COLLECTION_METHOD.SCRAPER,
+          collectedAt: now,
           lastCheckedAt: now,
-          lastSuccessAt: now,
+          lastVerifiedAt: now,
+          verificationStatus: VERIFICATION_STATUS.VERIFIED,
         },
-      });
+        { process: "scripts/scraper" }
+      );
 
-      await prisma.priceHistory.create({
-        data: {
-          offerId: offer.id,
-          amount: scrapedPlan.price,
-          currency: config.currency,
-          taxIncluded: config.taxIncluded,
-          recordedAt: now,
-        },
-      });
-
-      await prisma.changeLog.create({
-        data: {
-          type: "PLAN_CHANGE",
-          description: `${platform.name} (${config.countryCode}): Novo plano "${scrapedPlan.name}" por ${formatMoney(scrapedPlan.price, config.currency, config.locale)}`,
-          platformId: platform.id,
-          countryCode: config.countryCode,
-          currency: config.currency,
-          newValue: String(scrapedPlan.price),
-        },
-      });
-
-      console.log(
-        `  🆕 Novo plano: ${scrapedPlan.name} - ${formatMoney(scrapedPlan.price, config.currency, config.locale)}`
+      counts[result.status === "created" ? "created" : result.status === "updated" ? "updated" : "unchanged"]++;
+      if (result.priceChanged) {
+        console.log(`  ⚡ ${plan.name}: preço atualizado`);
+      } else if (result.status === "created") {
+        console.log(
+          `  🆕 Novo plano: ${plan.name} - ${formatMoney(plan.price, config.currency, config.locale)}`
+        );
+      }
+    } catch (error) {
+      counts.failed++;
+      console.error(
+        `  ✗ ${plan.name}: ${error instanceof Error ? error.message : error}`
       );
     }
   }
+
+  return counts;
 }
 
 async function main() {
   console.log("=== StreamingDB Scraper ===\n");
 
+  let hadFailure = false;
+
   for (const config of scrapers) {
-    const plans = await scrapePlatform(config);
-    if (plans.length > 0) {
-      await updatePlatform(config, plans);
+    const runId = await startCollectionRun(prisma, {
+      kind: "SCRAPE",
+      platformId: (
+        await prisma.platform.findUnique({
+          where: { slug: config.slug },
+          select: { id: true },
+        })
+      )?.id,
+      countryCode: config.countryCode,
+      source: config.url,
+    });
+
+    const startedAt = new Date();
+    const outcome = await scrapePlatform(config);
+
+    if (!outcome.ok) {
+      // Falha de coleta não altera preço nem lastVerifiedAt: apenas
+      // registra que a fonte foi consultada sem sucesso.
+      const checked = await markCheckFailure(config, startedAt);
+      await finishCollectionRun(prisma, runId, {
+        kind: "SCRAPE",
+        countryCode: config.countryCode,
+        source: config.url,
+        status: "FAILED",
+        httpStatus: outcome.httpStatus,
+        offersFound: 0,
+        recordsFailed: checked,
+        errorCode: outcome.errorCode,
+        error: outcome.error,
+      });
+      console.error(
+        `  ${config.name}: ${outcome.errorCode} - ${outcome.error}`
+      );
+      hadFailure = true;
+      continue;
+    }
+
+    try {
+      const counts = await updatePlatform(config, outcome.plans);
+      await finishCollectionRun(prisma, runId, {
+        kind: "SCRAPE",
+        countryCode: config.countryCode,
+        source: config.url,
+        status: counts.failed > 0 ? "PARTIAL" : "SUCCESS",
+        httpStatus: outcome.httpStatus,
+        offersFound: outcome.plans.length,
+        recordsCreated: counts.created,
+        recordsUpdated: counts.updated,
+        recordsUnchanged: counts.unchanged,
+        recordsFailed: counts.failed,
+        errorCode: counts.failed > 0 ? "INVALID_DATA" : null,
+        error:
+          counts.failed > 0
+            ? `${counts.failed} oferta(s) rejeitada(s) pela validação`
+            : null,
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      await finishCollectionRun(prisma, runId, {
+        kind: "SCRAPE",
+        countryCode: config.countryCode,
+        source: config.url,
+        status: "FAILED",
+        httpStatus: outcome.httpStatus,
+        offersFound: outcome.plans.length,
+        errorCode: "INTERNAL_ERROR",
+        error: message,
+      });
+      console.error(`  ${config.name}: ${message}`);
+      hadFailure = true;
     }
   }
 
   console.log("\n=== Scraping complete ===");
-  await prisma.$disconnect();
+  if (hadFailure) process.exitCode = 1;
 }
 
-main().catch((err) => {
-  console.error("Fatal:", err);
-  process.exit(1);
-});
+main()
+  .catch((err) => {
+    console.error("Fatal:", err);
+    process.exit(1);
+  })
+  .finally(() => prisma.$disconnect());

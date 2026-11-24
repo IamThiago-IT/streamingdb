@@ -29,6 +29,7 @@ function getLocale(request: NextRequest): Locale {
   for (const { tag } of languages) {
     if (tag === "pt" || tag.startsWith("pt-")) return "pt-BR";
     if (tag === "en" || tag.startsWith("en-")) return "en";
+    if (tag === "es" || tag.startsWith("es-")) return "es";
   }
 
   return defaultLocale;
